@@ -1,0 +1,41 @@
+{% extends "provapp/base.html" %}
+
+{% block title %}Detailed provenance for a given rave_observation_id{% endblock %}
+
+{% block content %}
+
+<h2>Detailed provenance for a given RAVE observation_id</h2>
+
+<h3>Entity: {{ entity.label }}</h3>
+Details:
+<ul>
+<li>id: {{ entity.id }}</li>
+<li>name: {{ entity.name }}</li>
+<li>type: {{ entity.type }}</li>
+<li>annotation: {{ entity.annotation }}</li>
+</ul>
+
+
+<h3>Graphs</h3>
+<div id="url_graphjson" class="hidden">{{ url }}</div>
+
+<h4>Sankey chart</h4>
+<p>Based on <a href="https://bost.ocks.org/mike/sankey/">https://bost.ocks.org/mike/sankey/</a>.
+</p>
+
+<p id="chart"></p>
+<aside>Drag to rearrange nodes.</aside>
+
+<h4>Force directed graph layout</h4>
+<p>See e.g. <a href="http://bl.ocks.org/mbostock/4062045">http://bl.ocks.org/mbostock/4062045</a> for an example.
+
+<p id="force-legend"></p>
+
+<p id="force-graph"></p>
+
+{% load staticfiles %}
+<script src="{% static 'provapp/provgraphs.js' %}" charset="utf-8"></script>
+
+
+
+{% endblock %}

@@ -1,0 +1,166 @@
+
+/* forms: */
+.errorlist {
+  list-style: none;
+  color: #ff0000;
+}
+
+.helptext {
+  font-size: 80%;
+  color: #666;
+}
+
+form ul {
+  padding-left: 0;
+  list-style-type: none;
+  display: inline;
+  float: left;
+  margin-bottom: 0px;
+}
+
+form ul li {
+  float: left;
+  padding-left: 30px;
+}
+
+form ul li:first-child {
+  padding-left: 0px;
+}
+
+form ul li label {
+  font-weight: normal;
+}
+
+/* svg graphs */
+svg {
+  background-color: #fff;
+  border: 1px solid silver;
+}
+
+.link {
+  fill: none;
+  stroke: #aaa;
+  stroke-width: 2px;
+}
+
+.link.sankey {
+  /*stroke: #ccc;*/
+  stroke-opacity: 0.5;
+}
+.link.sankey:hover {
+  stroke-opacity: .8;
+}
+.link.used {
+  stroke: #8b0000;
+  fill: none;
+}
+
+.marker.used {
+  stroke: #8b0000;
+  fill: #8b0000;
+}
+
+.link.wasGeneratedBy {
+  stroke: darkgreen;
+  fill: none;
+}
+
+.marker.wasGeneratedBy {
+  stroke: darkgreen;
+  fill: darkgreen;
+}
+.marker.wasGeneratedBy {
+  stroke: darkgreen;
+  fill: darkgreen;
+}
+
+.link.hadMember {
+  stroke: #fed37f;
+  fill: none;
+}
+.marker.hadMember {
+  stroke: #fed37f;
+  fill: #fed37f;
+}
+
+.link.hadStep {
+  stroke: #7f83fe;
+  fill: none;
+}
+.marker.hadStep {
+  stroke: #7f83fe;
+  fill: #7f83fe;
+}
+
+.link.wasAssociatedWith {
+  /*stroke-dasharray: 0,2 1;*/
+  stroke: #ccc;
+  fill: none;
+}
+.marker.wasAssociatedWith {
+  stroke: #ccc;
+  fill: #ccc;
+}
+
+.link.wasDerivedFrom {
+  stroke-dasharray: 0,2 1;
+  stroke: #aaa;
+  fill: none;
+}
+.marker.wasDerivedFrom {
+  stroke: #aaa;
+  fill: #aaa;
+}
+
+.link.wasInformedBy {
+  stroke-dasharray: 0,2 1;
+  stroke: #aaa;
+  fill: none;
+}
+.marker.wasInformedBy {
+  stroke: #aaa;
+  fill: #aaa;
+}
+
+.link.wasAttributedTo {
+  /*stroke-dasharray: 0,2 1;*/
+  stroke: #ccc;
+  fill: none;
+}
+.marker.wasAttributedTo {
+  stroke: #ccc;
+  fill: #ccc;
+}
+
+
+
+circle {
+  fill: #ccc;
+  stroke: #333;
+  stroke-width: 1.5px;
+}
+
+.agent {
+  fill: #fed37f;
+  stroke: #000;
+}
+
+.entity {
+  fill: #fffc87;
+  stroke: #808080;
+}
+
+.activity {
+  fill: #9fb1fc; 
+  stroke: #0000ff;
+}
+.activityFlow {
+  fill: #6f56f6; 
+  stroke: #0000ff;
+}
+
+text {
+  font: 10px sans-serif;
+  pointer-events: none;
+  text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
+}
