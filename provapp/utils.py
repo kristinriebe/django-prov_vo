@@ -3,7 +3,6 @@ from .models import (
     WasAssociatedWith, WasAttributedTo, HadMember, WasDerivedFrom,
     WasInformedBy, HadStep, ActivityFlow, Collection
 )
-from .models import RaveObsids
 
 
 # Helper functions for tracking provenance paths
