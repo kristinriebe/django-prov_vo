@@ -1,4 +1,4 @@
 include LICENSE
 include README.rst
-recursive-include prov_vo/static *
-recursive-include prov_vo/templates *
+recursive-include provapp/static *
+recursive-include provapp/templates *

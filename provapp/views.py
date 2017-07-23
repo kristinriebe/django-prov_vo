@@ -62,14 +62,8 @@ from .renderers import PROVNRenderer, PROVJSONRenderer
 from .forms import ObservationIdForm, ProvDalForm
 
 
-class IndexView(generic.ListView):
+class IndexView(generic.TemplateView):
     template_name = 'provapp/index.html'
-    context_object_name = 'activity_list'
-
-    def get_queryset(self):
-        """Return the activities (at most 1000, ordered by startTime)."""
-        return Activity.objects.order_by('-startTime')[:1000]
-
 
 class ActivityViewSet(viewsets.ModelViewSet):
     serializer_class = ActivitySerializer
@@ -449,7 +443,7 @@ def provdal(request):
         'hadMember': {},
         'wasDerivedFrom': {},
         'hadStep': {},
-        'wasInformedBy': {}
+        'wasInformedBy': {},
         'wasInfluencedBy': {}
     }
 
