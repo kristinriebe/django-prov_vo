@@ -26,14 +26,14 @@ Installation
     cd ..
     cd <my_web_app>
 
-    An example for a web application using this package is available
+  An example for a web application using this package is available
     at https://github.com/kristinriebe/provenance-rave
 
 * Install the prov-vo app (e.g. inside your virtual environment) using pip::
 
     pip install ../django-prov-vo/dist/django-prov-vo-0.1.tar.gz
 
-    Alternatively, you can also add the following lines in your webapp's :code:`settings.py`::
+  Alternatively, you can also add the following lines in your webapp's :code:`settings.py`::
 
     import sys
     sys.path.append('../django-prov-vo/')
