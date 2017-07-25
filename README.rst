@@ -12,45 +12,67 @@ Thus, provenance metadata can be stored and served in an VO-compatible way.
 Installation
 ------------
 
-* Download the package:
-    git clone ...github.com/kristinriebe/django-prov-vo/
+* Download the package::
 
-* Package the prov-vo app:
+       git clone https://github.com/github/kristinriebe/django-prov-vo/
 
-	.. code::
-	cd django-prov-vo
-	python setup.py sdist
+* Package the prov-vo app::
 
-* Switch to your main web application and install the prov-vo app (e.g. inside your virtual environment) using pip:
+       cd django-prov-vo
+       python setup.py sdist
 
-	.. code::
-	cd ..
-	cd <my_web_app>
-	pip install ../django-prov-vo/dist/django-prov-vo-0.1.tar.gz 
+* Switch to your main web application (or create it now with :code:`django-admin startproject <my_web_app>`)::
 
-    Alternatively, you can also add the following lines in your webapp's :code:`settings.py`:
+    cd ..
+    cd <my_web_app>
 
-    .. code:: python
+    An example for a web application using this package is available
+    at https://github.com/kristinriebe/provenance-rave
+
+* Install the prov-vo app (e.g. inside your virtual environment) using pip::
+
+    pip install ../django-prov-vo/dist/django-prov-vo-0.1.tar.gz
+
+    Alternatively, you can also add the following lines in your webapp's :code:`settings.py`::
+
     import sys
     sys.path.append('../django-prov-vo/')
 
 
-* Add prov-vo to your INSTALLED_APPS setting like this::
+* Add prov-vo to your INSTALLED_APPS setting in :code:`settings.py` like this::
 
     INSTALLED_APPS = [
         ...
         'prov-vo',
     ]
 
-* Include the prov-vo URLconf in your project urls.py like this::
+* Include the prov-vo URLconf in your project's urls.py like this::
 
     url(r'^prov-vo/', include('prov-vo.urls')),
 
-* Run `python manage.py migrate` to update the database and create
-   the provenance models.
+* Run :code:`python manage.py migrate` to update the database and create the provenance models.
 
-* Start the development server and open a browser with http://127.0.0.1:8000/prov-vo/
-You should see now an overview of further links to forms, activity lists etc.
+* Start the development server and open a browser with http://127.0.0.1:8000/prov-vo/. You should see now a page with some introductory words and links to forms, activity lists etc.
 
 Have fun! :-)
+
+
+TODO
+----
+* Remove RAVE-specific things from this package
+    - Load example ids for prov-dal form from settings
+    - Load project-specific namespace-prefixes from settings?
+
+* Fix REST API: create new activities etc. (datetime format problem), allow data update (PUT)
+
+* Proper error handling
+* Write tests for checking all the functionality
+* Use MySQL database/remote database instead of Sqlite3
+* check code coverage
+* write extended documentation
+* publish as PyPi package
+
+* Implement xml serialization, votable serialization, for REST api and for Prov-DAL endoint
+* Implement "description" classes, i.e. ActivityDescription etc. (if needed)
+* Find a better way to visualize activityFlow, collection, detail/basic etc.
 
