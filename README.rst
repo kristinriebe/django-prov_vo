@@ -1,5 +1,5 @@
 ======================
-Django prov-vo package
+Django prov_vo package
 ======================
 
 This package is intended to be used with a Django web application, see e.g. github.com/kristinriebe/provenance-rave/. It is an implementation of the
@@ -14,11 +14,11 @@ Installation
 
 * Download the package::
 
-       git clone https://github.com/github/kristinriebe/django-prov-vo/
+       git clone https://github.com/github/kristinriebe/django-prov_vo/
 
-* Package the prov-vo app::
+* Package the prov_vo app::
 
-       cd django-prov-vo
+       cd django-prov_vo
        python setup.py sdist
 
 * Switch to your main web application (or create it now with :code:`django-admin startproject <my_web_app>`)::
@@ -28,30 +28,30 @@ Installation
 
   An example for a web application using this package is available at https://github.com/kristinriebe/provenance-rave
 
-* Install the prov-vo app (e.g. inside your virtual environment) using pip::
+* Install the prov_vo app (e.g. inside your virtual environment) using pip::
 
-    pip install ../django-prov-vo/dist/django-prov-vo-0.1.tar.gz
+    pip install ../django-prov_vo/dist/django-prov_vo-0.1.tar.gz
 
   Alternatively, you can also add the following lines in your webapp's :code:`settings.py`::
 
     import sys
-    sys.path.append('../django-prov-vo/')
+    sys.path.append('../django-prov_vo/')
 
 
-* Add prov-vo to your INSTALLED_APPS setting in :code:`settings.py` like this::
+* Add prov_vo to your INSTALLED_APPS setting in :code:`settings.py` like this::
 
     INSTALLED_APPS = [
         ...
-        'prov-vo',
+        'prov_vo',
     ]
 
-* Include the prov-vo URLconf in your project's urls.py like this::
+* Include the prov_vo URLconf in your project's urls.py like this::
 
-    url(r'^prov-vo/', include('prov-vo.urls')),
+    url(r'^prov_vo/', include('prov_vo.urls')),
 
 * Run :code:`python manage.py migrate` to update the database and create the provenance models.
 
-* Start the development server and open a browser with http://127.0.0.1:8000/prov-vo/. You should see now a page with some introductory words and links to forms, activity lists etc.
+* Start the development server and open a browser with http://127.0.0.1:8000/prov_vo/. You should see now a page with some introductory words and links to forms, activity lists etc.
 
 Have fun! :-)
 

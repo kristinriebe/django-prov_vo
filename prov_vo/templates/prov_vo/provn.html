@@ -1,0 +1,79 @@
+{% extends "prov_vo/base.html" %}
+
+{% block title %}Provenance webapp - PROV-N output{% endblock %}
+
+{% block content %}
+<h1>PROV-N output</h1>
+
+
+<div>
+{% if activity_list %}
+    {% for activity in activity_list %}
+        <span class="activity">activity</span>( <a href="{% url 'prov_vo:activity-detail' activity.id %}">{{ activity.id }}</a>, 
+        {{ activity.startTime }}, 
+        {{ activity.endTime }}, 
+        [prov:type = '{{ activity.type }}', 
+         prov:name = '{{ activity.name }}', 
+         prov:annotation = '{{ activity.annotation }}'
+        ] )
+        <br>
+    {% endfor %}
+{% endif %}
+{% if entity_list %}
+    {% for entity in activity_list %}
+        <span class="entity">entity</span>( <a href="{% url 'prov_vo:entity-detail' entity.id %}">{{ entity.id }}</a>, 
+        [prov:type = '{{ entity.type }}', 
+         prov:name = '{{ entity.name }}', 
+         prov:annotation = '{{ entity.annotation }}'
+        ] )
+        <br>
+    {% endfor %}
+{% endif %}
+{% if agent_list %}
+    {% for ag in agent_list %}
+        <span class="agent">agent</span>( <a href="{% url 'prov_vo:agent-detail' ag.id %}">{{ ag.id }}</a>, 
+        [prov:type = '{{ ag.type }}', 
+         prov:name = '{{ ag.name }}', 
+         prov:annotation = '{{ ag.annotation }}'
+        ] )
+        <br>
+    {% endfor %}
+{% endif %}
+{% if used_list %}
+    {% for u in used_list %}
+        <span class="used">used</span>( <a href="{% url 'prov_vo:activity-detail' u.activity.id %}">{{ u.activity.id }}</a>, 
+        <a href="{% url 'prov_vo:entity-detail' u.entity.id %}">{{ u.entity.id }}</a>
+        [id = '{{ u.id }}, prov:role = '{{ u.role }}'] )
+        <br>
+    {% endfor %}
+{% endif %}
+{% if wasGeneratedBy_list %}
+    {% for w in wasGeneratedBy_list %}
+        <span class="wasGeneratedBy">wasGeneratedBy</span>( <a href="{% url 'prov_vo:entity-detail' w.entity.id %}">{{ w.entity.id }}</a>,
+         <a href="{% url 'prov_vo:activity-detail' w.activity.id %}">{{ w.activity.id }}</a>, 
+        [id = '{{ w.id }}, prov:role = '{{ w.role }}'] )
+        <br>
+    {% endfor %}
+{% endif %}
+{% if wasAssociatedWith_list %}
+    {% for w in wasAssociatedWith_list %}
+        <span class="wasAssociatedWith">wasAssociatedWith</span>( <a href="{% url 'prov_vo:activity-detail' w.activity.id %}">{{ w.activity.id }}</a>, 
+        <a href="{% url 'prov_vo:agent-detail' w.agent.id %}">{{ w.agent.id }}</a>, 
+        [id = '{{ w.id }}, prov:role = '{{ w.role }}'] )
+        <br>
+    {% endfor %}
+{% endif %}
+{% if wasAttributedTo_list %}
+    {% for w in wasAttributedTo_list %}
+        <span class="wasAttributedTo">wasAttributedTo</span>( <a href="{% url 'prov_vo:entity-detail' w.entity.id %}">{{ w.entity.id }}</a>,
+        <a href="{% url 'prov_vo:agent-detail' w.agent.id %}">{{ w.agent.id }}</a>,
+        [id = '{{ w.id }}, prov:role = '{{ w.role }}'] )
+        <br>
+    {% endfor %}
+{% endif %}
+</div>
+
+
+
+
+{% endblock %}

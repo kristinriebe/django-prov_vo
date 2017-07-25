@@ -1,0 +1,90 @@
+{% extends "prov_vo/base.html" %}
+
+{% block title %}Details for an activity{% endblock %}
+
+{% block content %}
+
+<h2>Activity: {{ activity.label }}</h2>
+<h3>Details</h3>
+<ul>
+<li>id: {{ activity.id }}</li>
+<li>name: {{ activity.name }}</li>
+<li>type: {{ activity.type }}</li>
+<li>annotation: {{ activity.annotation }}</li>
+<li>startTime: {{ activity.startTime }}</li>
+<li>endTime: {{ activity.endTime }}</li>
+</ul>
+
+
+<h3>Relations</h3>
+<h4>Used (input)</h4>
+{% if used_list %}
+    <ul>
+    {% for used in used_list %}
+        {% if activity.id in used.activity.id %}
+            <li><a href="{% url 'prov_vo:activity_detail' activity.id %}">{{ activity.name }}</a>
+                used
+                <a href="{% url 'prov_vo:entity_detail' used.entity.id %}">{{ used.entity.name }}</a></li>
+        {% endif %}
+    {% endfor %}
+    </ul>
+{% else %}
+    <p class="notfound">No used relations are available.</p>
+{% endif %}
+
+
+<h4>WasGeneratedBy (output)</h4>
+{% if wasGeneratedBy_list %}
+    <ul>
+    {% for wasGeneratedBy in wasGeneratedBy_list %}
+        {% if activity.id in wasGeneratedBy.activity.id %}
+            <li><a href="{% url 'prov_vo:entity_detail' wasGeneratedBy.entity.id %}">{{ wasGeneratedBy.entity.name }}</a>
+                wasGeneratedBy
+                <a href="{% url 'prov_vo:activity_detail' activity.id %}">{{ activity.name }}</a>
+                </li>
+        {% endif %}
+    {% endfor %}
+    </ul>
+{% else %}
+    <p class="notfound">No wasGeneratedBy relations are available.</p>
+{% endif %}
+
+
+<h4>WasAssociatedWith (contacts, acknowledgements)</h4>
+{% if wasAssociatedWith_list %}
+    <ul>
+    {% for wasAssociatedWith in wasAssociatedWith_list %}
+        {% if activity.id in wasAssociatedWith.activity.id %}
+            <li><a href="{% url 'prov_vo:activity_detail' activity.id %}">{{ activity.name }}</a>
+                wasAssociatedWith
+                <a href="{% url 'prov_vo:agent_detail' wasAssociatedWith.agent.id %}">{{ wasAssociatedWith.agent.name }}</a>
+                </li>
+        {% endif %}
+    {% endfor %}
+    </ul>
+{% else %}
+    <p class="notfound">No agent relations are available.</p>
+{% endif %}
+
+
+<h3>Graphs</h3>
+<div id="url_graphjson" class="hidden">{{ url }}</div>
+
+<h4>Sankey chart</h4>
+<p>Based on <a href="https://bost.ocks.org/mike/sankey/">https://bost.ocks.org/mike/sankey/</a>.
+</p>
+
+<p id="chart"></p>
+<aside>Drag to rearrange nodes.</aside>
+
+<h4>Force directed graph layout</h4>
+<p>See e.g. <a href="http://bl.ocks.org/mbostock/4062045">http://bl.ocks.org/mbostock/4062045</a> for an example.
+
+<p id="force-legend"></p>
+
+<p id="force-graph"></p>
+
+{% load staticfiles %}
+<script src="{% static 'prov_vo/provgraphs.js' %}" charset="utf-8"></script>
+
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "prov_vo/base.html" %}
+
+{% block title %}Provenance webapp - Activities{% endblock %}
+
+{% block content %}
+<h1>RAVE Activities</h1>
+
+<p>
+Following activities are recorded for RAVE. Click on one of them to show the details.
+</p>
+{% if activity_list %}
+    <ul>
+    {% for activity in activity_list %}
+        <li><a href="{% url 'prov_vo:activity_detail' activity.id %}">{{ activity.name }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No activities are available.</p>
+{% endif %}
+
+{% endblock %}

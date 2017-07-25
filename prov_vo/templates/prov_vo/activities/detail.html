@@ -1,0 +1,33 @@
+{% extends "prov_vo/base.html" %}
+
+{% block title %}Details{% endblock %}
+
+{% block content %}
+
+<h2>Activity: {{ activity.label }}</h2>
+Details: 
+<ul>
+<li>id: {{ activity.id }}</li>
+<li>label: {{ activity.label }}</li>
+<li>type: {{ activity.type }}</li>
+<li>description: {{ activity.description }}</li>
+<li>startTime: {{ activity.startTime }}</li>
+<li>endTime: {{ activity.endTime }}</li>
+</ul>
+
+
+<!-- <ul>
+{% for entity in activity.datacomponent_set.all %}
+       <li><a href="{% url 'dmapp:result' datacomponent.id %}">{{ datacomponent.name }}</a></li>
+{% endfor %}
+</ul>
+
+Input DataComponents:
+<ul>
+{% for datacomponent in activity.inputdata.all %}
+       <li><a href="{% url 'dmapp:result' datacomponent.id %}">{{ datacomponent.name }}</a></li>
+{% endfor %}
+
+</ul>
+-->
+{% endblock %}
