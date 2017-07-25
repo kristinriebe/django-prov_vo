@@ -26,8 +26,7 @@ Installation
     cd ..
     cd <my_web_app>
 
-  An example for a web application using this package is available
-    at https://github.com/kristinriebe/provenance-rave
+  An example for a web application using this package is available at https://github.com/kristinriebe/provenance-rave
 
 * Install the prov-vo app (e.g. inside your virtual environment) using pip::
 
@@ -59,6 +58,7 @@ Have fun! :-)
 
 TODO
 ----
+
 * Remove RAVE-specific things from this package
     - Load example ids for prov-dal form from settings
     - Load project-specific namespace-prefixes from settings?
