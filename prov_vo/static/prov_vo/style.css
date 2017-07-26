@@ -1,3 +1,54 @@
+@font-face {
+    font-family: "Droid Sans";
+    src: url('{% static 'prov_vo/DroidSans.ttf' %}');
+
+}
+
+body {
+  font-family: "Droid Sans",Helvetica,Arial,sans-serif;
+  color: #333;
+  padding-left: 1.5em;
+  padding-right: 1.5em;
+  background-color: #fafafa;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: sans-serif;
+  color: #004189;
+}
+
+h4 {
+  padding-top: 8px;
+}
+
+.footer {
+  font-size: 75%;
+  color: #999;
+  border-top: 1px solid silver;
+  margin-top: 10px;
+  padding-top: 5px;
+}
+
+a {
+  color: rgb(24,78,253);
+}
+
+a:visited {
+  color: rgb(0,67,139);
+  }
+
+/* font style for end points of data tree */
+.nothingmore {
+  font-size: 75%;
+  color: #999;
+}
+
+
+/* adjust bootstrap classes */
+.row {
+  margin-bottom: 10px;
+}
+
 
 /* forms: */
 .errorlist {
