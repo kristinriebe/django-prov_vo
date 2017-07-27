@@ -276,11 +276,12 @@ def provdal_form(request):
         # process the data in form.cleaned_data as required
             try:
                 obj_id = form.cleaned_data['obj_id']
-                step = form.cleaned_data['step_flag']
+                backward = form.cleaned_data['backward']
+                #forward = form.cleaned_data['forward']
                 format = form.cleaned_data['format']
                 compliance = form.cleaned_data['model']
 
-                return HttpResponseRedirect(reverse('prov_vo:provdal')+"?ID=%s&STEP=%s&FORMAT=%s&MODEL=%s" % (str(obj_id), str(step), str(format), str(compliance)))
+                return HttpResponseRedirect(reverse('prov_vo:provdal')+"?ID=%s&BACKWARD=%s&FORMAT=%s&MODEL=%s" % (str(obj_id), str(backward), str(format), str(compliance)))
 
             except ValueError:
                 form = ProvDalForm(request.POST)
@@ -300,7 +301,8 @@ def provdal(request):
     # entity_id = request.GET.get('ID') #default: None
     # There can be more than one ID given, so:
     id_list = request.GET.getlist('ID')
-    step_flag = request.GET.get('STEP', 'LAST') # can be LAST or ALL
+    backward = request.GET.get('BACKWARD', 'ALL') # can be 0,1,2, etc. or ALL
+    #forward = request.GET.get('FORWARD', '0') # can be 0,1,2, etc. or ALL
     format = request.GET.get('FORMAT', 'PROV-N') # can be PROV-N, PROV-JSON, VOTABLE
     model = request.GET.get('MODEL', 'IVOA')  # one of IVOA, W3C (or None?)
 
@@ -309,21 +311,26 @@ def provdal(request):
         for i in id_list:
             ids += 'ID=%s&' % i
         return render(request, 'prov_vo/provdal_graph.html',
-            {'url': reverse('prov_vo:provdal') + "?%sSTEP=%s&FORMAT=GRAPH-JSON&MODEL=%s" % (ids, str(step_flag), str(model))})
+            {'url': reverse('prov_vo:provdal') + "?%sBACKWARD=%s&FORMAT=GRAPH-JSON&MODEL=%s" % (ids, str(backward), str(model))})
 
     # check step_flag, store as 'follow' for provenance functions
-    if step_flag == "ALL":
+    backcountdown = -1    
+    if backward == "ALL":
         # will search for further provenance, recursively
-        follow = True
-    elif step_flag == "LAST":
+        follow = True # always
+        backcountdown = -1
+    elif backward == "1":
         # will just go back one step (backwards in time)
         follow = False
+    elif backward.isdigit():
+        backcountdown = int(backward)
+        follow = True
     else:
         # raise error: not supported
         raise ValidationError(
             'Invalid value: %(value)s is not supported',
             code='invalid',
-            params={'value': step_flag},
+            params={'value': backward},
         )
 
     prefix = {
@@ -360,7 +367,7 @@ def provdal(request):
             entity = Entity.objects.get(id=obj_id)
             # store current entity in dict and search for provenance:
             prov['entity'][entity.id] = entity
-            prov = utils.find_entity(entity, prov, follow=follow)
+            prov = utils.find_entity(entity, prov, backcountdown, follow=follow)
         except Entity.DoesNotExist:
             pass
             # do not return, just continue with other ids
@@ -372,7 +379,7 @@ def provdal(request):
             activity_type = utils.get_activity_type(obj_id)
 
             prov[activity_type][activity.id] = activity
-            prov = utils.find_activity(activity, prov, follow=follow)
+            prov = utils.find_activity(activity, prov, backcountdown, follow=follow)
         except Activity.DoesNotExist:
             pass
 

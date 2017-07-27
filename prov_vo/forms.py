@@ -12,13 +12,21 @@ class ProvDalForm(forms.Form):
         help_text="Please enter the identifier for an entity (e.g. rave:20030411_1507m23_001 or rave:20121220_0752m38_089) or an activity (e.g. rave:act_irafReduction)",
     )
 
-    step_flag = forms.ChoiceField(
-        label="Step flag",
-        choices=[('LAST', 'last'), ('ALL','all')],
+    backward = forms.ChoiceField(
+        label="Backward",
+        choices=[('1', '1'), ('ALL','all')],
         widget=forms.RadioSelect(),
         help_text="Specify if just one or all previous steps shall be retrieved",
         initial='ALL'
     )
+
+    #forward = forms.ChoiceField(
+    #    label="Forward",
+    #    choices=[('1', '1'), ('ALL','all')],
+    #    widget=forms.RadioSelect(),
+    #    help_text="Specify if just one or all forward steps shall be retrieved",
+    #    initial='ALL'
+    #)
 
     model = forms.ChoiceField(
         label="Data model",

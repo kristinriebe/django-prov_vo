@@ -131,7 +131,7 @@ def find_activity_graph(activity, prov, collection="include"):
 
 
 
-def find_entity(entity, prov, follow=True):
+def find_entity(entity, prov, backcountdown, follow=True):
     # Look for entity in all possible relations,
     # follow these relations further recursively.
     # If follow is False, then do not follow the relations any futher,
@@ -150,7 +150,7 @@ def find_entity(entity, prov, follow=True):
 
             # follow provenance along this activity(flow)
             if follow:
-                prov = find_activity(wg.activity, prov, follow=True)
+                prov = find_activity(wg.activity, prov, backcountdown, follow=True)
             #else:
             # follow only for one step
             #    prov = find_activity(wg.activity, prov, follow=False)
@@ -170,7 +170,7 @@ def find_entity(entity, prov, follow=True):
 
             # continue with pre-decessor
             if follow:
-                prov = find_entity(wd.usedEntity, prov, follow=True)
+                prov = find_entity(wd.usedEntity, prov, backcountdown, follow=True)
 
         # add wasDerivedFrom-link (in any case)
         prov['wasDerivedFrom'][wd.id] = wd
@@ -190,7 +190,7 @@ def find_entity(entity, prov, follow=True):
 
             # follow this collection's provenance (if it was not recorded before)
             if follow:
-                prov = find_entity(h.collection, prov, follow=True)
+                prov = find_entity(h.collection, prov, backcountdown, follow=True)
             else:
                 # only if there was no wasDerivedFrom and wasGeneratedBy so far,
                 # only then follow the collection's provenance one more step
@@ -218,7 +218,7 @@ def find_entity(entity, prov, follow=True):
     return prov
 
 
-def find_activity(activity, prov, follow=True):
+def find_activity(activity, prov, backcountdown, follow=True):
 
     queryset = Used.objects.filter(activity=activity.id)
 
@@ -235,7 +235,7 @@ def find_activity(activity, prov, follow=True):
 
             # follow this entity's provenance
             if follow:
-                prov = find_entity(u.entity, prov, follow=True)
+                prov = find_entity(u.entity, prov, backcountdown, follow=True)
 
         # add used-link:
         prov['used'][u.id] = u
@@ -266,7 +266,7 @@ def find_activity(activity, prov, follow=True):
 
             # follow provenance along this activity(flow)
             if follow:
-                prov = find_activity(wi.informant, prov, follow=True)
+                prov = find_activity(wi.informant, prov, backcountdown, follow=True)
 
         # add relationship to prov
         prov['wasInformedBy'][wi.id] = wi
@@ -284,7 +284,7 @@ def find_activity(activity, prov, follow=True):
 
             # follow provenance along this activity(flow)
             if follow:
-                prov = find_activity(h.activityFlow, prov, follow=True)
+                prov = find_activity(h.activityFlow, prov, backcountdown, follow=True)
 
         # add relationship to prov
         prov['hadStep'][h.id] = h
