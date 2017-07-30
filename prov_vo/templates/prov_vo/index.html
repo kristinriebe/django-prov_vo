@@ -12,9 +12,10 @@
 The ProvDAL endpoint is located at <a href="{% url 'prov_vo:provdal' %}">{% url 'prov_vo:provdal' %}</a>. It takes following possible request parameters:
 <ul>
     <li>ID: a valid identifier for an entity or activity</li>
-    <li>STEP: <code>LAST</code> for retrieving only the last provenance step or <code>ALL</code> for everything</li>
+    <li>BACKWARD: integer for the number of steps to track provenance history or <code>ALL</code> for everything</li>
+    <li>FORWARD: integer for the number of steps to track relations forward (in time) or <code>ALL</code> for everything</li>
     <li>MODEL: <code>IVOA</code> for compliance with IVOA ProvenanceDM or <code>W3C</code> for compliance with W3C ProvDM</li>
-    <li>FORMAT: only <code>PROV-JSON</code> and <code>PROV-N</code> are possible for now, in addition <code>Graphics</code></li>
+    <li>FORMAT: only <code>PROV-JSON</code> and <code>PROV-N</code> are possible for now, in addition: <code>Graphics</code></li>
 </ul>
 There is also a <a href="{% url 'prov_vo:provdal_form' %}">ProvDAL Form</a> which you can fill out and submit, so it will create and send the appropriate request for you.
 
