@@ -313,16 +313,13 @@ def provdal(request):
         return render(request, 'prov_vo/provdal_graph.html',
             {'url': reverse('prov_vo:provdal') + "?%sBACKWARD=%s&FORMAT=GRAPH-JSON&MODEL=%s" % (ids, str(backward), str(model))})
 
-    # check step_flag, store as 'follow' for provenance functions
-    backcountdown = -1    
+    # check flags
+    backcountdown = -1
     if backward == "ALL":
-        # will search for further provenance, recursively
-        follow = True # always
+        # will search for all further provenance, recursively
         backcountdown = -1
-    elif backward == "1":
-        # will just go back one step (backwards in time)
-        follow = False
     elif backward.isdigit():
+        # follow at most backward relations along provenance history
         backcountdown = int(backward)
         follow = True
     else:
@@ -367,7 +364,7 @@ def provdal(request):
             entity = Entity.objects.get(id=obj_id)
             # store current entity in dict and search for provenance:
             prov['entity'][entity.id] = entity
-            prov = utils.find_entity(entity, prov, backcountdown, follow=follow)
+            prov = utils.find_entity(entity, prov, backcountdown)
         except Entity.DoesNotExist:
             pass
             # do not return, just continue with other ids
@@ -379,7 +376,7 @@ def provdal(request):
             activity_type = utils.get_activity_type(obj_id)
 
             prov[activity_type][activity.id] = activity
-            prov = utils.find_activity(activity, prov, backcountdown, follow=follow)
+            prov = utils.find_activity(activity, prov, backcountdown)
         except Activity.DoesNotExist:
             pass
 

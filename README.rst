@@ -66,6 +66,7 @@ TODO
 * Fix REST API: create new activities etc. (datetime format problem), allow data update (PUT)
 
 * Proper error handling
+* Move print-statements to error/debug log
 * Write tests for checking all the functionality
 * Use MySQL database/remote database instead of Sqlite3
 * check code coverage
