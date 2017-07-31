@@ -315,13 +315,15 @@ def provdal(request):
 
     # check flags
     backcountdown = -1
+    allbackward = False
     if backward == "ALL":
         # will search for all further provenance, recursively
         backcountdown = -1
+        allbackward = True
     elif backward.isdigit():
         # follow at most backward relations along provenance history
         backcountdown = int(backward)
-        follow = True
+        allbackward = False
     else:
         # raise error: not supported
         raise ValidationError(
@@ -364,7 +366,7 @@ def provdal(request):
             entity = Entity.objects.get(id=obj_id)
             # store current entity in dict and search for provenance:
             prov['entity'][entity.id] = entity
-            prov = utils.find_entity(entity, prov, backcountdown)
+            prov = utils.find_entity(entity, prov, backcountdown, allbackward)
         except Entity.DoesNotExist:
             pass
             # do not return, just continue with other ids
@@ -376,7 +378,7 @@ def provdal(request):
             activity_type = utils.get_activity_type(obj_id)
 
             prov[activity_type][activity.id] = activity
-            prov = utils.find_activity(activity, prov, backcountdown)
+            prov = utils.find_activity(activity, prov, backcountdown, allbackward)
         except Activity.DoesNotExist:
             pass
 

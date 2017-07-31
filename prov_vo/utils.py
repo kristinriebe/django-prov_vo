@@ -6,17 +6,39 @@ from .models import (
 import logging
 
 
-def find_entity(entity, prov, backcountdown):
+def find_entity(entity, prov, backcountdown, allbackward=False):
     if backcountdown == 0:
         return prov
+
     # Look for entity in all possible relations,
     # follow these relations further recursively.
     # Follow at most backcountdown steps backward.
 
-    if backcountdown != -1:
+    if not allbackward:
+        # well, it actually does not hurt to do it always,
+        # it's just meaningless in the all-case
         backcountdown -= 1
 
-    # track the provenance information backwards via WasGeneratedBy
+    # First go through the 'short-cut' relation 'wasDerivedFrom'
+    # because thus I only need to follow those nodes via the long
+    # path, that were not visited before
+
+    # wasDerivedFrom
+    queryset = WasDerivedFrom.objects.filter(generatedEntity=entity.id)
+    for wd in queryset:
+        # add wasDerivedFrom-link
+        if wd.id not in prov['wasDerivedFrom']:
+            prov['wasDerivedFrom'][wd.id] = wd
+
+        # add entity to prov, if not yet done
+        if wd.usedEntity.id not in prov['entity']:
+            prov['entity'][wd.usedEntity.id] = wd.usedEntity
+
+            # continue with pre-decessor
+            prov = find_entity(wd.usedEntity, prov, backcountdown, allbackward)
+
+
+    # wasGeneratedBy
     queryset = WasGeneratedBy.objects.filter(entity=entity.id)
     for wg in queryset:
         # add wasGeneratedBy-link
@@ -30,28 +52,18 @@ def find_entity(entity, prov, backcountdown):
         activity_type = get_activity_type(wg.activity.id)
         if wg.activity.id not in prov[activity_type]:
             prov[activity_type][wg.activity.id] = wg.activity
-            prov = find_activity(wg.activity, prov, backcountdown)
 
-        else:
-            if backcountdown != -1:
+            # follow activity further (but only, if not visited before)
+            prov = find_activity(wg.activity, prov, backcountdown, allbackward)
+
+        #else:
+        #    if not allbackward:
             # follow this activity in any case, even if it was found before,
             # because it may happen that this path is shorter than the one
-            # before, and thus more relations need to be followed
-                prov = find_activity(wg.activity, prov, backcountdown)
+            # before, and thus more relations need to be followed;
+            # except, if all prov. info is required anyway
+        #        prov = find_activity(wg.activity, prov, backcountdown, allbackward)
 
-    # wasDerivedFrom
-    queryset = WasDerivedFrom.objects.filter(generatedEntity=entity.id)
-    for wd in queryset:
-        # add wasDerivedFrom-link
-        if wd.id not in prov['wasDerivedFrom']:
-            prov['wasDerivedFrom'][wd.id] = wd
-
-        # add entity to prov, if not yet done
-        if wd.usedEntity.id not in prov['entity']:
-            prov['entity'][wd.usedEntity.id] = wd.usedEntity
-
-        # continue with pre-decessor
-        prov = find_entity(wd.usedEntity, prov, backcountdown)
 
     # hadMember (check for children)
     queryset = HadMember.objects.filter(collection=entity.id)
@@ -64,8 +76,9 @@ def find_entity(entity, prov, backcountdown):
         if h.entity.id not in prov['entity']:
             prov['entity'][h.entity.id] = h.entity
 
-        # follow further
-        prov = find_entity(h.collection, prov, backcountdown)
+            # follow further
+            prov = find_entity(h.collection, prov, backcountdown, allbackward)
+
 
     # # check membership to collection
     # queryset = HadMember.objects.filter(entity=entity.id)
@@ -104,52 +117,21 @@ def find_entity(entity, prov, backcountdown):
         if wa.agent.id not in prov['agent']:
             prov['agent'][wa.agent.id] = wa.agent
 
-
     # When I end up here, then I have reached an endpoint in the graph
     return prov
 
 
-def find_activity(activity, prov, backcountdown):
+def find_activity(activity, prov, backcountdown, allbackward=False):
     if backcountdown == 0:
         return prov
 
     # decrease countdown, unless ALL is desired (-1)
-    if backcountdown != -1:
+    if not allbackward:
         backcountdown -= 1
-    else:
-        # if ALL is desired, then do not follow
-        # nodes that were already visited
-        activity_type = get_activity_type(activity.id)
-        if activity.id in prov[activity_type]:
-            return prov
 
-    # used relations
-    queryset = Used.objects.filter(activity=activity.id)
-    for u in queryset:
-        # add used-link, if not yet done
-        if u.id not in prov['used']:
-            prov['used'][u.id] = u
-
-        # add entity to prov, if not yet done
-        if u.entity.id not in prov['entity']:
-            prov['entity'][u.entity.id] = u.entity
-
-        # follow this entity's provenance (always)
-        prov = find_entity(u.entity, prov, backcountdown)
-
-    # check agent relation (association)
-    queryset = WasAssociatedWith.objects.filter(activity=activity.id)
-    for wa in queryset:
-
-        # add relationship to prov
-        if wa.id not in prov['wasAssociatedWith']:
-            prov['wasAssociatedWith'][wa.id] = wa
-
-        # add agent to prov
-        if wa.agent.id not in prov['agent']:
-            prov['agent'][wa.agent.id] = wa.agent
-
-        # do not follow agent further
+    # First check the 'shortcut' relationship 'wasInformedBy',
+    # so I get the potentially farthest path first and do not
+    # need to follow paths of already visited edges.
 
     # wasInformedBy
     queryset = WasInformedBy.objects.filter(informed=activity.id)
@@ -164,11 +146,39 @@ def find_activity(activity, prov, backcountdown):
         if wi.informant.id not in prov[activity_type]:
             prov[activity_type][wi.informant.id] = wi.informant
 
-        # follow provenance along this activity(flow)
-        prov = find_activity(wi.informant, prov, backcountdown)
+            # follow provenance along this activity(flow)
+            prov = find_activity(wi.informant, prov, backcountdown, allbackward)
 
     # we won't check reverse direction, i.e. do not check, if this activity
     # has informed other activities (no future tracking)
+
+    # used relations
+    queryset = Used.objects.filter(activity=activity.id)
+    for u in queryset:
+        # add used-link, if not yet done
+        if u.id not in prov['used']:
+            prov['used'][u.id] = u
+
+        # add entity to prov, if not yet done
+        if u.entity.id not in prov['entity']:
+            prov['entity'][u.entity.id] = u.entity
+
+            # follow this entity's provenance (always)
+            prov = find_entity(u.entity, prov, backcountdown, allbackward)
+
+    # check agent relation (association)
+    queryset = WasAssociatedWith.objects.filter(activity=activity.id)
+    for wa in queryset:
+
+        # add relationship to prov
+        if wa.id not in prov['wasAssociatedWith']:
+            prov['wasAssociatedWith'][wa.id] = wa
+
+        # add agent to prov
+        if wa.agent.id not in prov['agent']:
+            prov['agent'][wa.agent.id] = wa.agent
+
+        # do not follow agent further
 
     # hadStep
     # queryset = HadStep.objects.filter(activity=activity.id)
@@ -198,8 +208,8 @@ def find_activity(activity, prov, backcountdown):
         if h.activity.id not in prov[activity_type]:
             prov[activity_type][h.activity.id] = h.activity
 
-        # follow provenance along this activity(flow)
-        prov = find_activity(h.activity, prov, backcountdown)
+            # follow provenance along this activity(flow)
+            prov = find_activity(h.activity, prov, backcountdown, allbackward)
 
     return prov
 
