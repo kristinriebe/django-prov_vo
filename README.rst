@@ -59,6 +59,9 @@ Have fun! :-)
 TODO
 ----
 
+* Fully implement new ProvDAL suggestions, along with optional extensions,
+ + implement a version that is closer to what the users need
+
 * Remove RAVE-specific things from this package
     - Load example ids for prov-dal form from settings
     - Load project-specific namespace-prefixes from settings?
