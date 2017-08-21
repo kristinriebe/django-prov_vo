@@ -62,9 +62,6 @@ TODO
 * Fully implement new ProvDAL suggestions, along with optional extensions,
  + implement a version that is closer to what the users need
 
-* Remove RAVE-specific things from this package
-    - Load project-specific namespace-prefixes from settings?
-
 * Fix REST API: create new activities etc. (datetime format problem), allow data update (PUT)
 
 * Proper error handling

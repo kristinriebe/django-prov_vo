@@ -2,6 +2,8 @@ import sys # just for debugging
 import json
 from datetime import datetime
 
+from django.conf import settings
+
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponse, HttpResponseRedirect
 #from django.template import loader
@@ -123,13 +125,18 @@ def allprov(request, format):
 
     # first store everything in a prov-dictionary
     prefix = {
-        "rave": "http://www.rave-survey.org/prov/",
         "voprov": "http://www.ivoa.net/documents/ProvenanceDM/voprov/",
         "org": "http://www.ivoa.net/documents/ProvenanceDM/voprov/org/",
         "vo": "http://www.ivoa.net/documents/ProvenanceDM/voprov/vo",
         "prov": "http://www.w3.org/ns/prov#",  # defined by default
         "xsd": "http://www.w3.org/2000/10/XMLSchema#"  # defined by default
     }
+
+    # add prefixes from settings:
+    if settings.PROV_VO_CONFIG.namespaces:
+        for key, value in settings.PROV_VO_CONFIG.namespaces.items():
+            prefix[key] = value
+
 
     prov = {
         'prefix': prefix,
@@ -333,13 +340,17 @@ def provdal(request):
         )
 
     prefix = {
-        "rave": "http://www.rave-survey.org/prov/",
         "voprov": "http://www.ivoa.net/documents/ProvenanceDM/voprov/",
         "org": "http://www.ivoa.net/documents/ProvenanceDM/voprov/org/",
         "vo": "http://www.ivoa.net/documents/ProvenanceDM/voprov/vo",
         "prov": "http://www.w3.org/ns/prov#",  # defined by default
         "xsd": "http://www.w3.org/2000/10/XMLSchema#"  # defined by default
     }
+
+    # add (project specific) prefixes from (global) settings:
+    if settings.PROV_VO_CONFIG['namespaces']:
+        for key, value in settings.PROV_VO_CONFIG['namespaces'].items():
+            prefix[key] = value
 
     prov = {
         'prefix': prefix,

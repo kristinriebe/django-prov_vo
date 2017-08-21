@@ -1,8 +1,8 @@
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
 from prov_vo.models import Entity
-from django.conf import settings
 
 
 class ProvDalForm(forms.Form):
@@ -48,8 +48,8 @@ class ProvDalForm(forms.Form):
 
     # if there are additional form settings defined in settings,
     # overwrite/add corresponding options:
-    if settings.PROV_VO_FORM_CONFIG:
-        formsettings = settings.PROV_VO_FORM_CONFIG
+    if settings.PROV_VO_CONFIG['provdalform']:
+        formsettings = settings.PROV_VO_CONFIG['provdalform']
 
         if 'obj_id.help_text' in formsettings:
             obj_id.help_text = formsettings['obj_id.help_text']
