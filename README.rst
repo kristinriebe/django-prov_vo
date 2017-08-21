@@ -5,7 +5,7 @@ Django prov_vo package
 This package is intended to be used with a Django web application, see e.g. github.com/kristinriebe/provenance-rave/. It is an implementation of the
 IVOA Provenance Data Model: the data model classes
 are implemented as Django models, a provenance data layer access
-(ProvDAL) is also included.
+(ProvDAL) interface is also included.
 Thus, provenance metadata can be stored and served in an VO-compatible way.
 
 
@@ -63,7 +63,6 @@ TODO
  + implement a version that is closer to what the users need
 
 * Remove RAVE-specific things from this package
-    - Load example ids for prov-dal form from settings
     - Load project-specific namespace-prefixes from settings?
 
 * Fix REST API: create new activities etc. (datetime format problem), allow data update (PUT)
