@@ -1,15 +1,17 @@
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
 from prov_vo.models import Entity
 
 
 class ProvDalForm(forms.Form):
+
     obj_id = forms.CharField(
         label='Entity or activity ID',
         max_length=1024,
         widget=forms.TextInput(attrs={'size':36}),
-        help_text="Please enter the identifier for an entity (e.g. rave:20030411_1507m23_001 or rave:20121220_0752m38_089) or an activity (e.g. rave:act_irafReduction)",
+        help_text="Please enter the identifier for an entity or an activity",
     )
 
     backward = forms.ChoiceField(
@@ -43,3 +45,11 @@ class ProvDalForm(forms.Form):
         help_text="Format of returned provenance record",
         initial='PROV-JSON'
     )
+
+    # if there are additional form settings defined in settings,
+    # overwrite/add corresponding options:
+    if settings.PROV_VO_CONFIG['provdalform']:
+        formsettings = settings.PROV_VO_CONFIG['provdalform']
+
+        if 'obj_id.help_text' in formsettings:
+            obj_id.help_text = formsettings['obj_id.help_text']
