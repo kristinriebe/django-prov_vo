@@ -14,8 +14,8 @@ class ProvDalForm(forms.Form):
         help_text="Please enter the identifier for an entity or an activity",
     )
 
-    backward = forms.ChoiceField(
-        label="Backward",
+    depth = forms.ChoiceField(
+        label="DEPTH",
         choices=[('1', '1'), ('ALL','all')],
         widget=forms.RadioSelect(),
         help_text="Specify if just one or all previous steps shall be retrieved",

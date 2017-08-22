@@ -6,7 +6,7 @@ from .models import (
 import logging
 
 
-def find_entity(entity, prov, backcountdown, allbackward=False):
+def find_entity(entity, prov, backcountdown, allbackward=False, members_flag=False, steps_flag=False, agent_flag=False):
     if backcountdown == 0:
         return prov
 
@@ -35,7 +35,11 @@ def find_entity(entity, prov, backcountdown, allbackward=False):
             prov['entity'][wd.usedEntity.id] = wd.usedEntity
 
             # continue with pre-decessor
-            prov = find_entity(wd.usedEntity, prov, backcountdown, allbackward)
+            prov = find_entity(wd.usedEntity, prov, backcountdown,
+                allbackward=allbackward,
+                members_flag=members_flag,
+                steps_flag=steps_flag,
+                agent_flag=agent_flag)
 
 
     # wasGeneratedBy
@@ -54,7 +58,10 @@ def find_entity(entity, prov, backcountdown, allbackward=False):
             prov[activity_type][wg.activity.id] = wg.activity
 
             # follow activity further (but only, if not visited before)
-            prov = find_activity(wg.activity, prov, backcountdown, allbackward)
+            prov = find_activity(wg.activity, prov, backcountdown,                allbackward=allbackward,
+                members_flag=members_flag,
+                steps_flag=steps_flag,
+                agent_flag=agent_flag)
 
         #else:
         #    if not allbackward:
@@ -65,45 +72,47 @@ def find_entity(entity, prov, backcountdown, allbackward=False):
         #        prov = find_activity(wg.activity, prov, backcountdown, allbackward)
 
 
-    # hadMember (check for children)
-    queryset = HadMember.objects.filter(collection=entity.id)
+
+    # check membership to collection
+    queryset = HadMember.objects.filter(entity=entity.id)
     for h in queryset:
+    #     print "Entity "+ entity.id + " is member of collection: ", h.collection.id, follow
+
         # add relation to prov
         if h.id not in prov['hadMember']:
             prov['hadMember'][h.id] = h
 
-        # add entity to prov
-        if h.entity.id not in prov['entity']:
-            prov['entity'][h.entity.id] = h.entity
+        # add entity to prov-json, if not yet done
+        if h.collection.id not in prov['entity']:
+            prov['entity'][h.collection.id] = h.collection
 
             # follow further
-            prov = find_entity(h.collection, prov, backcountdown, allbackward)
+            prov = find_entity(h.collection, prov, backcountdown,               allbackward=allbackward,
+                members_flag=members_flag,
+                steps_flag=steps_flag,
+                agent_flag=agent_flag)
 
 
-    # # check membership to collection
-    # queryset = HadMember.objects.filter(entity=entity.id)
-    # # TODO: the entity could also be the collection!! I.e. need to check also: collection=entity.id
-    # # actually, entities cannot belong to more than one collection,
-    # # but we'll allow it here for now ...
-    # for h in queryset:
-    #     print "Entity "+ entity.id + " is member of collection: ", h.collection.id, follow
 
-    #     # add entity to prov-json, if not yet done
-    #     if h.collection.id not in prov['entity']:
-    #         prov['entity'][h.collection.id] = h.collection
+    # hadMember (check for members)
+    if members_flag == True:
+        queryset = HadMember.objects.filter(collection=entity.id)
+        for h in queryset:
+            # add relation to prov
+            if h.id not in prov['hadMember']:
+                prov['hadMember'][h.id] = h
 
-    #         # follow this collection's provenance (if it was not recorded before)
-    #         if follow:
-    #             prov = find_entity(h.collection, prov, backcountdown, follow=True)
-    #         else:
-    #             # only if there was no wasDerivedFrom and wasGeneratedBy so far,
-    #             # only then follow the collection's provenance one more step
-    #             if len(prov['wasGeneratedBy']) == 0 and len(prov['wasDerivedFrom']) == 0:
-    #                 prov = find_entity(h.collection, prov, backcountdown, follow=False)
-    #             pass
+            # add entity to prov
+            if h.entity.id not in prov['entity']:
+                prov['entity'][h.entity.id] = h.entity
 
-    #     # add hadMember-link:
-    #     prov['hadMember'][h.id] = h
+                # follow further
+                prov = find_entity(h.entity, prov, backcountdown,                allbackward=allbackward,
+                    members_flag=members_flag,
+                    steps_flag=steps_flag,
+                    agent_flag=agent_flag)
+
+
 
 
     # check agent relation (attribution)
@@ -121,7 +130,7 @@ def find_entity(entity, prov, backcountdown, allbackward=False):
     return prov
 
 
-def find_activity(activity, prov, backcountdown, allbackward=False):
+def find_activity(activity, prov, backcountdown, allbackward=False, members_flag=False, steps_flag=False, agent_flag=False):
     if backcountdown == 0:
         return prov
 
@@ -147,7 +156,10 @@ def find_activity(activity, prov, backcountdown, allbackward=False):
             prov[activity_type][wi.informant.id] = wi.informant
 
             # follow provenance along this activity(flow)
-            prov = find_activity(wi.informant, prov, backcountdown, allbackward)
+            prov = find_activity(wi.informant, prov, backcountdown,                allbackward=allbackward,
+                members_flag=members_flag,
+                steps_flag=steps_flag,
+                agent_flag=agent_flag)
 
     # we won't check reverse direction, i.e. do not check, if this activity
     # has informed other activities (no future tracking)
@@ -164,7 +176,10 @@ def find_activity(activity, prov, backcountdown, allbackward=False):
             prov['entity'][u.entity.id] = u.entity
 
             # follow this entity's provenance (always)
-            prov = find_entity(u.entity, prov, backcountdown, allbackward)
+            prov = find_entity(u.entity, prov, backcountdown,                allbackward=allbackward,
+                members_flag=members_flag,
+                steps_flag=steps_flag,
+                agent_flag=agent_flag)
 
     # check agent relation (association)
     queryset = WasAssociatedWith.objects.filter(activity=activity.id)
@@ -209,7 +224,10 @@ def find_activity(activity, prov, backcountdown, allbackward=False):
             prov[activity_type][h.activity.id] = h.activity
 
             # follow provenance along this activity(flow)
-            prov = find_activity(h.activity, prov, backcountdown, allbackward)
+            prov = find_activity(h.activity, prov, backcountdown,                allbackward=allbackward,
+                members_flag=members_flag,
+                steps_flag=steps_flag,
+                agent_flag=agent_flag)
 
     return prov
 
