@@ -284,11 +284,17 @@ def provdal_form(request):
             try:
                 obj_id = form.cleaned_data['obj_id']
                 depth = form.cleaned_data['depth']
-                #forward = form.cleaned_data['forward']
+                members = form.cleaned_data['members']
+                steps = form.cleaned_data['steps']
+                agent = form.cleaned_data['agent']
                 format = form.cleaned_data['format']
                 compliance = form.cleaned_data['model']
 
-                return HttpResponseRedirect(reverse('prov_vo:provdal')+"?ID=%s&DEPTH=%s&FORMAT=%s&MODEL=%s" % (str(obj_id), str(depth), str(format), str(compliance)))
+                return HttpResponseRedirect(
+                    reverse('prov_vo:provdal')+"?ID=%s&DEPTH=%s&MEMBERS=%s&STEPS=%s&AGENT=%s&FORMAT=%s&MODEL=%s" %
+                    (str(obj_id), str(depth), str(members).upper(),
+                    str(steps).upper(), str(agent).upper(), str(format),
+                    str(compliance)))
 
             except ValueError:
                 form = ProvDalForm(request.POST)
@@ -308,24 +314,31 @@ def provdal(request):
     # entity_id = request.GET.get('ID') #default: None
     # There can be more than one ID given, so:
     id_list = request.GET.getlist('ID')
+    if len(id_list) == 0:
+        return HttpResponse('Bad request: the ID parameter is required.', status=400)
+
+
     depth = request.GET.get('DEPTH', 'ALL') # can be 0,1,2, etc. or ALL
     #direction = request.GET.get('DIRECTION', 'BACKWARD')
     format = request.GET.get('FORMAT', 'PROV-N') # can be PROV-N, PROV-JSON, VOTABLE
     model = request.GET.get('MODEL', 'IVOA')  # one of IVOA, W3C (or None?)
 
-    members_flag = request.GET.get('MEMBERS', 'TRUE')  # True for tracking members of collections
+    # new optional parameters
+    members = request.GET.get('MEMBERS', 'FALSE')  # True for tracking members of collections
+    steps = request.GET.get('STEPS', 'FALSE')   # True for tracking steps of activityFlows
+    agent = request.GET.get('AGENT', 'FALSE')   # True for tracking all relations to/from agents
 
     if format == 'GRAPH':
         ids = ''
         for i in id_list:
             ids += 'ID=%s&' % i
         return render(request, 'prov_vo/provdal_graph.html',
-            {'url': reverse('prov_vo:provdal') + "?%sDEPTH=%s&FORMAT=GRAPH-JSON&MODEL=%s" % (ids, str(depth), str(model))})
+            {'url': reverse('prov_vo:provdal') + "?%sDEPTH=%s&MEMBERS=%s&STEPS=%s&AGENT=%s&FORMAT=GRAPH-JSON&MODEL=%s" % (ids, str(depth), str(members), str(steps), str(agent), str(model))})
 
     # check flags
     backcountdown = -1
     allbackward = False
-    if depth == "ALL":
+    if depth.upper() == "ALL":
         # will search for all further provenance, recursively
         backcountdown = -1
         allbackward = True
@@ -341,12 +354,17 @@ def provdal(request):
             params={'value': depth},
         )
 
-    if members_flag == 'TRUE':
-        members_flag = True
-
+    # check optional parameter values
+    members_flag = False
     steps_flag = False
     agent_flag = False
 
+    if members.upper() == 'TRUE':
+        members_flag = True
+    if steps.upper() == 'TRUE':
+        steps_flag = True
+    if agent.upper() == 'TRUE':
+        agent_flag = True
 
     prefix = {
         "voprov": "http://www.ivoa.net/documents/ProvenanceDM/voprov/",
@@ -409,7 +427,6 @@ def provdal(request):
                 agent_flag=agent_flag)
         except Activity.DoesNotExist:
             pass
-
 
     # The prov dictionary now contains the complete provenance information,
     # for all given entity ids,

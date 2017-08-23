@@ -15,13 +15,12 @@ class ProvDalForm(forms.Form):
     )
 
     depth = forms.ChoiceField(
-        label="DEPTH",
-        choices=[('1', '1'), ('ALL','all')],
-        widget=forms.RadioSelect(),
-        help_text="Specify if just one or all previous steps shall be retrieved",
+        label="Depth",
+        choices=[('1', '1'), ('2', '2'), ('3','3'), ('4', '4'), ('5', '5'), ('0', '0'), ('ALL','all')],
+        widget=forms.Select(),
+        help_text="Specify number of relations to be tracked",
         initial='ALL'
     )
-
     #forward = forms.ChoiceField(
     #    label="Forward",
     #    choices=[('1', '1'), ('ALL','all')],
@@ -45,6 +44,36 @@ class ProvDalForm(forms.Form):
         help_text="Format of returned provenance record",
         initial='PROV-JSON'
     )
+
+
+
+    members = forms.BooleanField(
+        label="Members",
+        widget=forms.CheckboxInput(),
+        #choices=[('1', '1'), ('ALL','all')],
+        help_text="Also track members of collections",
+        initial=False,
+        required=False
+        #default=False
+    )
+
+    steps = forms.BooleanField(
+        label="Activity steps",
+        widget=forms.CheckboxInput(),
+        help_text="Also track steps of activityFlows",
+        initial=False,
+        required=False
+    )
+
+    agent = forms.BooleanField(
+        label="Agent",
+        widget=forms.CheckboxInput(),
+        help_text="Include all agent relations",
+        initial=False,
+        required=False
+    )
+
+
 
     # if there are additional form settings defined in settings,
     # overwrite/add corresponding options:

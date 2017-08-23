@@ -58,7 +58,8 @@ def find_entity(entity, prov, backcountdown, allbackward=False, members_flag=Fal
             prov[activity_type][wg.activity.id] = wg.activity
 
             # follow activity further (but only, if not visited before)
-            prov = find_activity(wg.activity, prov, backcountdown,                allbackward=allbackward,
+            prov = find_activity(wg.activity, prov, backcountdown,
+                allbackward=allbackward,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
                 agent_flag=agent_flag)
@@ -87,7 +88,8 @@ def find_entity(entity, prov, backcountdown, allbackward=False, members_flag=Fal
             prov['entity'][h.collection.id] = h.collection
 
             # follow further
-            prov = find_entity(h.collection, prov, backcountdown,               allbackward=allbackward,
+            prov = find_entity(h.collection, prov, backcountdown,
+                allbackward=allbackward,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
                 agent_flag=agent_flag)
@@ -107,7 +109,8 @@ def find_entity(entity, prov, backcountdown, allbackward=False, members_flag=Fal
                 prov['entity'][h.entity.id] = h.entity
 
                 # follow further
-                prov = find_entity(h.entity, prov, backcountdown,                allbackward=allbackward,
+                prov = find_entity(h.entity, prov, backcountdown,
+                    allbackward=allbackward,
                     members_flag=members_flag,
                     steps_flag=steps_flag,
                     agent_flag=agent_flag)
@@ -156,7 +159,8 @@ def find_activity(activity, prov, backcountdown, allbackward=False, members_flag
             prov[activity_type][wi.informant.id] = wi.informant
 
             # follow provenance along this activity(flow)
-            prov = find_activity(wi.informant, prov, backcountdown,                allbackward=allbackward,
+            prov = find_activity(wi.informant, prov, backcountdown,
+                allbackward=allbackward,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
                 agent_flag=agent_flag)
@@ -176,7 +180,8 @@ def find_activity(activity, prov, backcountdown, allbackward=False, members_flag
             prov['entity'][u.entity.id] = u.entity
 
             # follow this entity's provenance (always)
-            prov = find_entity(u.entity, prov, backcountdown,                allbackward=allbackward,
+            prov = find_entity(u.entity, prov, backcountdown,
+                allbackward=allbackward,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
                 agent_flag=agent_flag)
@@ -195,39 +200,44 @@ def find_activity(activity, prov, backcountdown, allbackward=False, members_flag
 
         # do not follow agent further
 
-    # hadStep
-    # queryset = HadStep.objects.filter(activity=activity.id)
-    # for h in queryset:
-    #     print "ActivityFlow " + h.activityFlow.id + " hadStep activity ", activity.id
-
-    #     # add activityFlow, if not yet done
-    #     if h.activityFlow.id not in prov['activityFlow']:
-    #         prov['activityFlow'][h.activityFlow.id] = h.activityFlow
-
-    #         # follow provenance along this activity(flow)
-    #         if follow:
-    #             prov = find_activity(h.activityFlow, prov, backcountdown, follow=True)
-
-    #     # add relationship to prov
-    #     prov['hadStep'][h.id] = h
-
-    # hadStep, from activityflow to activity direction
-    queryset = HadStep.objects.filter(activityFlow=activity.id)
+    # hadStep - find activityFlows to which it belongs
+    queryset = HadStep.objects.filter(activity=activity.id)
     for h in queryset:
         # add relationship to prov
         if h.id not in prov['hadStep']:
             prov['hadStep'][h.id] = h
 
-        # add activity, if not yet done
-        activity_type = get_activity_type(h.activity.id)
-        if h.activity.id not in prov[activity_type]:
-            prov[activity_type][h.activity.id] = h.activity
+        # add activityFlow, if not yet done
+        if h.activityFlow.id not in prov['activityFlow']:
+            prov['activityFlow'][h.activityFlow.id] = h.activityFlow
 
             # follow provenance along this activity(flow)
-            prov = find_activity(h.activity, prov, backcountdown,                allbackward=allbackward,
+            prov = find_activity(h.activityFlow, prov, backcountdown,
+                allbackward=allbackward,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
                 agent_flag=agent_flag)
+
+
+    # hadStep, from activityflow to activity direction
+    if steps_flag == True:
+        queryset = HadStep.objects.filter(activityFlow=activity.id)
+        for h in queryset:
+            # add relationship to prov
+            if h.id not in prov['hadStep']:
+                prov['hadStep'][h.id] = h
+
+            # add activity, if not yet done
+            activity_type = get_activity_type(h.activity.id)
+            if h.activity.id not in prov[activity_type]:
+                prov[activity_type][h.activity.id] = h.activity
+
+                # follow provenance along this activity(flow)
+                prov = find_activity(h.activity, prov, backcountdown,
+                    allbackward=allbackward,
+                    members_flag=members_flag,
+                    steps_flag=steps_flag,
+                    agent_flag=agent_flag)
 
     return prov
 
