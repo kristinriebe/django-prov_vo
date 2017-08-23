@@ -8,10 +8,10 @@ from prov_vo.models import Entity
 class ProvDalForm(forms.Form):
 
     obj_id = forms.CharField(
-        label='Entity or activity ID',
+        label='Identifier',
         max_length=1024,
         widget=forms.TextInput(attrs={'size':36}),
-        help_text="Please enter the identifier for an entity or an activity",
+        help_text="Please enter the ID for an entity, activity or agent",
     )
 
     depth = forms.ChoiceField(

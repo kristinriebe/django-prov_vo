@@ -97,7 +97,7 @@ def find_entity(entity, prov, backcountdown, allbackward=False, members_flag=Fal
 
 
     # hadMember (check for members)
-    if members_flag == True:
+    if members_flag:
         queryset = HadMember.objects.filter(collection=entity.id)
         for h in queryset:
             # add relation to prov
@@ -128,6 +128,15 @@ def find_entity(entity, prov, backcountdown, allbackward=False, members_flag=Fal
         # add agent to prov
         if wa.agent.id not in prov['agent']:
             prov['agent'][wa.agent.id] = wa.agent
+
+        # do not follow agent further, unless flag is set
+        if agent_flag:
+            prov = find_agent(wa.agent, prov, backcountdown,
+                allbackward=allbackward,
+                members_flag=members_flag,
+                steps_flag=steps_flag,
+                agent_flag=agent_flag)
+
 
     # When I end up here, then I have reached an endpoint in the graph
     return prov
@@ -198,7 +207,14 @@ def find_activity(activity, prov, backcountdown, allbackward=False, members_flag
         if wa.agent.id not in prov['agent']:
             prov['agent'][wa.agent.id] = wa.agent
 
-        # do not follow agent further
+        # do not follow agent further, unless flag is set
+        if agent_flag:
+            prov = find_agent(wa.agent, prov, backcountdown,
+                allbackward=allbackward,
+                members_flag=members_flag,
+                steps_flag=steps_flag,
+                agent_flag=agent_flag)
+
 
     # hadStep - find activityFlows to which it belongs
     queryset = HadStep.objects.filter(activity=activity.id)
@@ -220,7 +236,7 @@ def find_activity(activity, prov, backcountdown, allbackward=False, members_flag
 
 
     # hadStep, from activityflow to activity direction
-    if steps_flag == True:
+    if steps_flag:
         queryset = HadStep.objects.filter(activityFlow=activity.id)
         for h in queryset:
             # add relationship to prov
@@ -252,3 +268,53 @@ def get_activity_type(activity_id):
         activity_type = 'activity'
 
     return activity_type
+
+
+def find_agent(agent, prov, backcountdown, allbackward=False, members_flag=False, steps_flag=False, agent_flag=False):
+    if backcountdown == 0:
+        return prov
+
+    # decrease countdown, unless ALL is desired (-1)
+    if not allbackward:
+        backcountdown -= 1
+
+    # Check possible agent relationships and follow corresponding activity/entity
+
+    queryset = WasAssociatedWith.objects.filter(agent=agent.id)
+    for wa in queryset:
+
+        # add relationship to prov
+        if wa.id not in prov['wasAssociatedWith']:
+            prov['wasAssociatedWith'][wa.id] = wa
+
+        # add activity, if not yet done
+        activity_type = get_activity_type(wa.activity.id)
+        if wa.activity.id not in prov[activity_type]:
+            prov[activity_type][wa.activity.id] = wa.activity
+
+            # follow provenance along this activity(flow)
+            prov = find_activity(wa.activity, prov, backcountdown,
+                allbackward=allbackward,
+                members_flag=members_flag,
+                steps_flag=steps_flag,
+                agent_flag=agent_flag)
+
+    # check agent relation (attribution)
+    queryset = WasAttributedTo.objects.filter(agent=agent.id)
+    for wa in queryset:
+        # add wasAttributedTo relationship
+        if wa.id not in prov['wasAttributedTo']:
+            prov['wasAttributedTo'][wa.id] = wa
+
+        # add entity to prov-json, if not yet done
+        if wa.entity.id not in prov['entity']:
+            prov['entity'][wa.entity.id] = wa.entity
+
+            # follow further
+            prov = find_entity(wa.entity, prov, backcountdown,
+                allbackward=allbackward,
+                members_flag=members_flag,
+                steps_flag=steps_flag,
+                agent_flag=agent_flag)
+
+    return prov

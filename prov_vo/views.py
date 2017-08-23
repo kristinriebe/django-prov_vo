@@ -428,6 +428,17 @@ def provdal(request):
         except Activity.DoesNotExist:
             pass
 
+        try:
+            agent = Agent.objects.get(id=obj_id)
+            prov['agent'][agent.id] = agent
+            if agent_flag:
+                prov = utils.find_agent(agent, prov, backcountdown,               allbackward=allbackward,
+                    members_flag=members_flag,
+                    steps_flag=steps_flag,
+                    agent_flag=agent_flag)
+        except Agent.DoesNotExist:
+            pass
+
     # The prov dictionary now contains the complete provenance information,
     # for all given entity ids,
     # in the form of a dictionary of querysets. First serialize them according to
