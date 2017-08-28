@@ -284,6 +284,7 @@ def provdal_form(request):
             try:
                 obj_id = form.cleaned_data['obj_id']
                 depth = form.cleaned_data['depth']
+                direction = form.cleaned_data['direction']
                 members = form.cleaned_data['members']
                 steps = form.cleaned_data['steps']
                 agent = form.cleaned_data['agent']
@@ -291,10 +292,10 @@ def provdal_form(request):
                 compliance = form.cleaned_data['model']
 
                 return HttpResponseRedirect(
-                    reverse('prov_vo:provdal')+"?ID=%s&DEPTH=%s&MEMBERS=%s&STEPS=%s&AGENT=%s&FORMAT=%s&MODEL=%s" %
-                    (str(obj_id), str(depth), str(members).upper(),
-                    str(steps).upper(), str(agent).upper(), str(format),
-                    str(compliance)))
+                    reverse('prov_vo:provdal')+"?ID=%s&DEPTH=%s&DIRECTION=%s&MEMBERS=%s&STEPS=%s&AGENT=%s&FORMAT=%s&MODEL=%s" %
+                    (str(obj_id), str(depth).upper(), str(direction).upper(), str(members).upper(),
+                    str(steps).upper(), str(agent).upper(), str(format).upper(),
+                    str(compliance).upper()))
 
             except ValueError:
                 form = ProvDalForm(request.POST)
@@ -319,7 +320,7 @@ def provdal(request):
 
 
     depth = request.GET.get('DEPTH', 'ALL') # can be 0,1,2, etc. or ALL
-    #direction = request.GET.get('DIRECTION', 'BACKWARD')
+    direction = request.GET.get('DIRECTION', 'BACK') # can be BACK or FORTH
     format = request.GET.get('FORMAT', 'PROV-N') # can be PROV-N, PROV-JSON, VOTABLE
     model = request.GET.get('MODEL', 'IVOA')  # one of IVOA, W3C (or None?)
 
@@ -333,7 +334,7 @@ def provdal(request):
         for i in id_list:
             ids += 'ID=%s&' % i
         return render(request, 'prov_vo/provdal_graph.html',
-            {'url': reverse('prov_vo:provdal') + "?%sDEPTH=%s&MEMBERS=%s&STEPS=%s&AGENT=%s&FORMAT=GRAPH-JSON&MODEL=%s" % (ids, str(depth), str(members), str(steps), str(agent), str(model))})
+            {'url': reverse('prov_vo:provdal') + "?%sDEPTH=%s&DIRECTION=%s&MEMBERS=%s&STEPS=%s&AGENT=%s&FORMAT=GRAPH-JSON&MODEL=%s" % (ids, str(depth), str(direction), str(members), str(steps), str(agent), str(model))})
 
     # check flags
     backcountdown = -1
@@ -406,6 +407,7 @@ def provdal(request):
             prov['entity'][entity.id] = entity
             prov = utils.find_entity(entity, prov, backcountdown,
                 allbackward=allbackward,
+                direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
                 agent_flag=agent_flag)
@@ -421,7 +423,9 @@ def provdal(request):
             activity_type = utils.get_activity_type(obj_id)
 
             prov[activity_type][activity.id] = activity
-            prov = utils.find_activity(activity, prov, backcountdown,               allbackward=allbackward,
+            prov = utils.find_activity(activity, prov, backcountdown,
+                allbackward=allbackward,
+                direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
                 agent_flag=agent_flag)
@@ -432,7 +436,9 @@ def provdal(request):
             agent = Agent.objects.get(id=obj_id)
             prov['agent'][agent.id] = agent
             if agent_flag:
-                prov = utils.find_agent(agent, prov, backcountdown,               allbackward=allbackward,
+                prov = utils.find_agent(agent, prov, backcountdown,
+                    allbackward=allbackward,
+                    direction=direction,
                     members_flag=members_flag,
                     steps_flag=steps_flag,
                     agent_flag=agent_flag)

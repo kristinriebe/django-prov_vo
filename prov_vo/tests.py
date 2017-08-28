@@ -8,16 +8,30 @@ from django.test import TestCase
 from django.test import Client
 from django.test.utils import setup_test_environment
 
-from .models import Activity, ActivityFlow, HadStep, Entity
+from .models import Activity, ActivityFlow, HadStep
+from .models import Entity, WasGeneratedBy, Used, WasDerivedFrom, WasInformedBy, HadMember
 from .models import Agent, WasAssociatedWith, WasAttributedTo
+
 # Run all tests:
-#   python manage.py test
+#   python manage.py test prov_vo
 # or:
-#   python manage.py test --settings=provenance.test_settings --nomigrations
+#   python manage.py test --settings=provenance.test_settings --nomigrations prov_vo
+#
+# or for using coverage:
+#   coverage run --source=prov_vo manage.py test --settings=provenance.test_settings --nomigrations prov_vo
+#   coverage report
 #
 # Run individual tests using:
 #   python manage.py test --settings=provenance.test_settings --nomigrations prov_vo.tests.Activity_TestCase
 # or similar
+
+def get_content(response):
+    content = re.sub(r'document.*\n', '', response.content)
+    content = re.sub(r'endDocument', '', content)
+    content = re.sub(r'prefix.*\n', '', content)
+
+#    print 'content: \n', content
+    return content
 
 
 # Model tests
@@ -53,6 +67,49 @@ class Entity_TestCase(TestCase):
         self.assertEqual(qset.name, "RAVE DR4")
 
 
+class Agent_TestCase(TestCase):
+
+    def setUp(self):
+        a = Agent.objects.create(id="ex:ag1", name="Max Maier")
+        a.save()
+
+    def test_getAgent(self):
+        qset = Agent.objects.get(id="ex:ag1")
+        self.assertEqual(qset.name, "Max Maier")
+
+
+class Used_TestCase(TestCase):
+
+    def setUp(self):
+        e = Entity.objects.create(id="rave:pipeline", name="RAVE Pipeline")
+        e.save()
+        a = Activity.objects.create(id="rave:act", name="myactivity")
+        a.save()
+        u = Used.objects.create(activity=a, entity=e)
+        u.save()
+
+    def test_getUsed(self):
+        qset = Used.objects.get(entity="rave:pipeline")
+        self.assertEqual(qset.entity.name, "RAVE Pipeline")
+        self.assertEqual(qset.activity.id, "rave:act")
+
+
+class WasGeneratedBy_TestCase(TestCase):
+
+    def setUp(self):
+        e = Entity.objects.create(id="rave:data", name="RAVE data")
+        e.save()
+        a = Activity.objects.create(id="rave:act", name="myactivity")
+        a.save()
+        wg = WasGeneratedBy.objects.create(activity=a, entity=e)
+        wg.save()
+
+    def test_getWasGeneratedBy(self):
+        qset = WasGeneratedBy.objects.get(entity="rave:data")
+        self.assertEqual(qset.entity.name, "RAVE data")
+        self.assertEqual(qset.activity.id, "myactivity")
+
+
 # View tests
 class ProvDAL_TestCase(TestCase):
 
@@ -66,6 +123,17 @@ class ProvDAL_TestCase(TestCase):
 
         e = Entity.objects.create(id="rave:dr4", name="RAVE DR4")
         e.save()
+        e0 = Entity.objects.create(id="rave:obs", name="RAVE observations")
+        e0.save()
+
+        wg = WasGeneratedBy.objects.create(entity=e, activity=a)
+        wg.save()
+
+        u = Used.objects.create(activity=a, entity=e0)
+        u.save()
+
+        #wd = WasDerivedFrom.objects.create(generatedEntity=e, usedEntity=e0)
+        #wd.save()
 
         ag = Agent.objects.create(id="org:rave", name="RAVE project")
         ag.save()
@@ -83,7 +151,7 @@ class ProvDAL_TestCase(TestCase):
 
     def test_getProvdalNothingFound(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=blabla')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=blabla&FORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         found = re.findall(r"^act.*", response.content, flags=re.MULTILINE)
         numlines = len(found)
@@ -91,7 +159,7 @@ class ProvDAL_TestCase(TestCase):
 
     def test_getProvdalActivityFlow(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow&FORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
 
         expected = 'activityFlow(rave:flow, -, -, [voprov:name="myflow"])'
@@ -100,7 +168,7 @@ class ProvDAL_TestCase(TestCase):
 
     def test_getProvdalActivityFlowDepth2(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow'+'&DEPTH=2')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow'+'&DEPTH=2&FORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         found = re.findall(r"^act.*", response.content, flags=re.MULTILINE)
         self.assertEqual(len(found), 1)
@@ -109,14 +177,14 @@ class ProvDAL_TestCase(TestCase):
         # If STEPS=TRUE, substeps of the activityFlow shall be followed,
         # thus both, activityFlow and activity must be returned
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow'+'&DEPTH=2'+'&STEPS=TRUE')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow'+'&DEPTH=2'+'&STEPS=TRUE&FORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         found = re.findall(r"^act.*", response.content, flags=re.MULTILINE)
         self.assertEqual(len(found), 2)
 
     def test_getProvdalActivityDepth2(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:act'+'&DEPTH=2')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:act'+'&DEPTH=2&FORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         found = re.findall(r"^act.*", response.content, flags=re.MULTILINE)
         self.assertEqual(len(found), 2)
@@ -125,27 +193,137 @@ class ProvDAL_TestCase(TestCase):
     # followed beyond the agent if AGENT option is set to TRUE
     def test_getProvdalAgent(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=org:rave&DEPTH=1')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=org:rave&DEPTH=1&FORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         # only the agent itself should be returned
-        found = re.findall(r"^agent.*", response.content, flags=re.MULTILINE)
-        self.assertEqual(len(found), 1)
+        content = get_content(response)
+        expected = \
+"""agent(org:rave, [voprov:name="RAVE project"])
+"""
+        self.assertEqual(expected, content)
 
     def test_getProvdalAgentFollow(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=org:rave&AGENT=TRUE&DEPTH=1')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=org:rave&AGENT=TRUE&DEPTH=1&FORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         # agent, activity, entity, wat and was. relation should be returned
         # strip begin/end document and prefix from response content:
-        content = re.findall(r"^(?!prefix).*", response.content, flags=re.MULTILINE)
-        content = [l for l in content if not l.startswith("document") and not l.startswith("endDocument")]
-        agents = [l for l in content if l.startswith("agent")]
-        was = [l for l in content if l.startswith("wasAssociatedWith")]
-        wat = [l for l in content if l.startswith("wasAttributedTo")]
-        entities = [l for l in content if l.startswith("entity")]
-        activities = [l for l in content if l.startswith("activity")]
-        self.assertEqual(len(agents), 1)
-        self.assertEqual(len(was), 1)
-        self.assertEqual(len(wat), 1)
-        self.assertEqual(len(entities), 1)
-        self.assertEqual(len(activities), 1)
+        content = get_content(response)
+        expected = \
+"""activity(rave:act, -, -, [voprov:name="myactivity"])
+entity(rave:dr4, [voprov:name="RAVE DR4"])
+agent(org:rave, [voprov:name="RAVE project"])
+wasAssociatedWith(rave:act, org:rave, -)
+wasAttributedTo(rave:dr4, org:rave)
+"""
+        self.assertEqual(expected, content)
+
+    def test_getProvdalBack(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:act&DEPTH=1&FORMAT=PROV-N')
+        self.assertEqual(response.status_code, 200)
+        content = re.sub(r'document.*\n', '', response.content)
+        content = re.sub(r'endDocument', '', content)
+        content = re.sub(r'prefix.*\n', '', content)
+        expected = \
+"""activity(rave:act, -, -, [voprov:name="myactivity"])
+activityFlow(rave:flow, -, -, [voprov:name="myflow"])
+entity(rave:obs, [voprov:name="RAVE observations"])
+agent(org:rave, [voprov:name="RAVE project"])
+used(rave:act, rave:obs, -)
+wasAssociatedWith(rave:act, org:rave, -)
+hadStep(rave:flow, rave:act)
+"""
+        self.assertEqual(content, expected)
+
+    def test_getProvdalForth(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:act&DEPTH=1&DIRECTION=FORTH&FORMAT=PROV-N')
+        self.assertEqual(response.status_code, 200)
+        content = re.sub(r'document.*\n', '', response.content)
+        content = re.sub(r'endDocument', '', content)
+        content = re.sub(r'prefix.*\n', '', content)
+        expected = \
+"""activity(rave:act, -, -, [voprov:name="myactivity"])
+activityFlow(rave:flow, -, -, [voprov:name="myflow"])
+entity(rave:dr4, [voprov:name="RAVE DR4"])
+agent(org:rave, [voprov:name="RAVE project"])
+wasGeneratedBy(rave:dr4, rave:act, -)
+wasAssociatedWith(rave:act, org:rave, -)
+hadStep(rave:flow, rave:act)
+"""
+        self.assertEqual(content, expected)
+
+
+class ProvDAL_Derivation_TestCase(TestCase):
+
+    def setUp(self):
+        e = Entity.objects.create(id="rave:dr4", name="RAVE DR4")
+        e.save()
+        e0 = Entity.objects.create(id="rave:obs", name="RAVE observations")
+        e0.save()
+
+        wd = WasDerivedFrom.objects.create(generatedEntity=e, usedEntity=e0)
+        wd.save()
+
+    def test_getProvdalBackDerivation(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=1&FORMAT=PROV-N')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""entity(rave:dr4, [voprov:name="RAVE DR4"])
+entity(rave:obs, [voprov:name="RAVE observations"])
+wasDerivedFrom(rave:dr4, rave:obs, -, -, -)
+"""
+        self.assertEqual(content, expected)
+
+    def test_getProvdalForthDerivation(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:obs&DEPTH=1&DIRECTION=FORTH&FORMAT=PROV-N')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""entity(rave:obs, [voprov:name="RAVE observations"])
+entity(rave:dr4, [voprov:name="RAVE DR4"])
+wasDerivedFrom(rave:dr4, rave:obs, -, -, -)
+"""
+        self.assertEqual(content, expected)
+
+
+class ProvDAL_Information_TestCase(TestCase):
+
+    def setUp(self):
+        a1 = Activity.objects.create(id="ex:act1", name="Activity 1")
+        a1.save()
+        a2 = Activity.objects.create(id="ex:act2", name="Activity 2")
+        a2.save()
+
+        wd = WasInformedBy.objects.create(informed=a2, informant=a1)
+        wd.save()
+
+    def test_getProvdalBackInformation(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:act2&DEPTH=1&FORMAT=PROV-N')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""activity(ex:act1, -, -, [voprov:name="Activity 1"])
+activity(ex:act2, -, -, [voprov:name="Activity 2"])
+wasInformedBy(ex:act2, ex:act1)
+"""
+        self.assertEqual(content, expected)
+
+    def test_getProvdalForthInformation(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:act1&DEPTH=1&DIRECTION=FORTH&FORMAT=PROV-N')
+        self.assertEqual(response.status_code, 200)
+        content = re.sub(r'document.*\n', '', response.content)
+        content = re.sub(r'endDocument', '', content)
+        content = re.sub(r'prefix.*\n', '', content)
+        expected = \
+"""activity(ex:act1, -, -, [voprov:name="Activity 1"])
+activity(ex:act2, -, -, [voprov:name="Activity 2"])
+wasInformedBy(ex:act2, ex:act1)
+"""
+        self.assertEqual(content, expected)

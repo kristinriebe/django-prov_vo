@@ -21,13 +21,13 @@ class ProvDalForm(forms.Form):
         help_text="Specify number of relations to be tracked",
         initial='ALL'
     )
-    #forward = forms.ChoiceField(
-    #    label="Forward",
-    #    choices=[('1', '1'), ('ALL','all')],
-    #    widget=forms.RadioSelect(),
-    #    help_text="Specify if just one or all forward steps shall be retrieved",
-    #    initial='ALL'
-    #)
+    direction = forms.ChoiceField(
+        label="Direction",
+        choices=[('BACK', 'back'), ('FORTH','forth')],
+        widget=forms.RadioSelect(),
+        help_text="Choose the tracking direction",
+        initial='BACK'
+    )
 
     model = forms.ChoiceField(
         label="Data model",
@@ -51,7 +51,7 @@ class ProvDalForm(forms.Form):
         label="Members",
         widget=forms.CheckboxInput(),
         #choices=[('1', '1'), ('ALL','all')],
-        help_text="Also track members of collections",
+        help_text="Also find and track members of collections",
         initial=False,
         required=False
         #default=False
@@ -60,7 +60,7 @@ class ProvDalForm(forms.Form):
     steps = forms.BooleanField(
         label="Activity steps",
         widget=forms.CheckboxInput(),
-        help_text="Also track steps of activityFlows",
+        help_text="Also find and track steps of activityFlows",
         initial=False,
         required=False
     )
@@ -68,7 +68,7 @@ class ProvDalForm(forms.Form):
     agent = forms.BooleanField(
         label="Agent",
         widget=forms.CheckboxInput(),
-        help_text="Include all agent relations",
+        help_text="Also find and track other entities and activities that the found agents are responsible for",
         initial=False,
         required=False
     )

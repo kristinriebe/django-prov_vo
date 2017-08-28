@@ -6,7 +6,7 @@ from .models import (
 import logging
 
 
-def find_entity(entity, prov, backcountdown, allbackward=False, members_flag=False, steps_flag=False, agent_flag=False):
+def find_entity(entity, prov, backcountdown, allbackward=False, direction='BACK', members_flag=False, steps_flag=False, agent_flag=False):
     if backcountdown == 0:
         return prov
 
@@ -24,53 +24,88 @@ def find_entity(entity, prov, backcountdown, allbackward=False, members_flag=Fal
     # path, that were not visited before
 
     # wasDerivedFrom
-    queryset = WasDerivedFrom.objects.filter(generatedEntity=entity.id)
+    if direction == 'BACK':
+        queryset = WasDerivedFrom.objects.filter(generatedEntity=entity.id)
+    else:
+        queryset = WasDerivedFrom.objects.filter(usedEntity=entity.id)
+
     for wd in queryset:
+        if direction == 'BACK':
+            nextnode = wd.usedEntity
+        else:
+            nextnode = wd.generatedEntity
+
         # add wasDerivedFrom-link
         if wd.id not in prov['wasDerivedFrom']:
             prov['wasDerivedFrom'][wd.id] = wd
 
         # add entity to prov, if not yet done
-        if wd.usedEntity.id not in prov['entity']:
-            prov['entity'][wd.usedEntity.id] = wd.usedEntity
+        if nextnode.id not in prov['entity']:
+            prov['entity'][nextnode.id] = nextnode
 
             # continue with pre-decessor
-            prov = find_entity(wd.usedEntity, prov, backcountdown,
+            prov = find_entity(nextnode, prov, backcountdown,
                 allbackward=allbackward,
+                direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
                 agent_flag=agent_flag)
 
 
-    # wasGeneratedBy
-    queryset = WasGeneratedBy.objects.filter(entity=entity.id)
-    for wg in queryset:
-        # add wasGeneratedBy-link
-        # --> need to check if it's already there, because I may have
-        # to walk nodes and relations twice for counting properly
-        # (if there is a shortcut somewhere)
-        if wg.id not in prov['wasGeneratedBy']:
-            prov['wasGeneratedBy'][wg.id] = wg
+    if direction == 'BACK':
 
-        # add activity(flow) to prov-list, if not included already
-        activity_type = get_activity_type(wg.activity.id)
-        if wg.activity.id not in prov[activity_type]:
-            prov[activity_type][wg.activity.id] = wg.activity
+        # wasGeneratedBy
+        queryset = WasGeneratedBy.objects.filter(entity=entity.id)
+        for wg in queryset:
+            # add wasGeneratedBy-link
+            # --> need to check if it's already there, because I may have
+            # to walk nodes and relations twice for counting properly
+            # (if there is a shortcut somewhere)
+            if wg.id not in prov['wasGeneratedBy']:
+                prov['wasGeneratedBy'][wg.id] = wg
 
-            # follow activity further (but only, if not visited before)
-            prov = find_activity(wg.activity, prov, backcountdown,
-                allbackward=allbackward,
-                members_flag=members_flag,
-                steps_flag=steps_flag,
-                agent_flag=agent_flag)
+            # add activity(flow) to prov-list, if not included already
+            activity_type = get_activity_type(wg.activity.id)
+            if wg.activity.id not in prov[activity_type]:
+                prov[activity_type][wg.activity.id] = wg.activity
 
-        #else:
-        #    if not allbackward:
-            # follow this activity in any case, even if it was found before,
-            # because it may happen that this path is shorter than the one
-            # before, and thus more relations need to be followed;
-            # except, if all prov. info is required anyway
-        #        prov = find_activity(wg.activity, prov, backcountdown, allbackward)
+                # follow activity further (but only, if not visited before)
+                prov = find_activity(wg.activity, prov, backcountdown,
+                    allbackward=allbackward,
+                    direction=direction,
+                    members_flag=members_flag,
+                    steps_flag=steps_flag,
+                    agent_flag=agent_flag)
+
+            #else:
+            #    if not allbackward:
+                # follow this activity in any case, even if it was found before,
+                # because it may happen that this path is shorter than the one
+                # before, and thus more relations need to be followed;
+                # except, if all prov. info is required anyway
+            #        prov = find_activity(wg.activity, prov, backcountdown, allbackward)
+
+    else:
+        # in FORTH case, we have to find out where entities are being used:
+
+        # used relations
+        queryset = Used.objects.filter(entity=entity.id)
+        for u in queryset:
+            # add used-link, if not yet done
+            if u.id not in prov['used']:
+                prov['used'][u.id] = u
+
+            # add activity to prov, if not yet done
+            if u.activity.id not in prov['activity']:
+                prov['activity'][u.activity.id] = u.activity
+
+                # follow this activity's provenance (always)
+                prov = find_activity(u.activity, prov, backcountdown,
+                    allbackward=allbackward,
+                    direction=direction,
+                    members_flag=members_flag,
+                    steps_flag=steps_flag,
+                    agent_flag=agent_flag)
 
 
 
@@ -90,6 +125,7 @@ def find_entity(entity, prov, backcountdown, allbackward=False, members_flag=Fal
             # follow further
             prov = find_entity(h.collection, prov, backcountdown,
                 allbackward=allbackward,
+                direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
                 agent_flag=agent_flag)
@@ -111,6 +147,7 @@ def find_entity(entity, prov, backcountdown, allbackward=False, members_flag=Fal
                 # follow further
                 prov = find_entity(h.entity, prov, backcountdown,
                     allbackward=allbackward,
+                    direction=direction,
                     members_flag=members_flag,
                     steps_flag=steps_flag,
                     agent_flag=agent_flag)
@@ -133,6 +170,7 @@ def find_entity(entity, prov, backcountdown, allbackward=False, members_flag=Fal
         if agent_flag:
             prov = find_agent(wa.agent, prov, backcountdown,
                 allbackward=allbackward,
+                direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
                 agent_flag=agent_flag)
@@ -142,7 +180,7 @@ def find_entity(entity, prov, backcountdown, allbackward=False, members_flag=Fal
     return prov
 
 
-def find_activity(activity, prov, backcountdown, allbackward=False, members_flag=False, steps_flag=False, agent_flag=False):
+def find_activity(activity, prov, backcountdown, allbackward=False, direction='BACK', members_flag=False, steps_flag=False, agent_flag=False):
     if backcountdown == 0:
         return prov
 
@@ -155,21 +193,31 @@ def find_activity(activity, prov, backcountdown, allbackward=False, members_flag
     # need to follow paths of already visited edges.
 
     # wasInformedBy
-    queryset = WasInformedBy.objects.filter(informed=activity.id)
+    if direction == 'BACK':
+        queryset = WasInformedBy.objects.filter(informed=activity.id)
+    else:
+        queryset = WasInformedBy.objects.filter(informant=activity.id)
+
     for wi in queryset:
+
+        if direction == 'BACK':
+            nextnode = wi.informant
+        else:
+            nextnode = wi.informed
 
         # add relationship to prov
         if wi.id not in prov['wasInformedBy']:
             prov['wasInformedBy'][wi.id] = wi
 
         # add activity(flow) to prov
-        activity_type = get_activity_type(wi.informant.id)
-        if wi.informant.id not in prov[activity_type]:
-            prov[activity_type][wi.informant.id] = wi.informant
+        activity_type = get_activity_type(nextnode.id)
+        if nextnode.id not in prov[activity_type]:
+            prov[activity_type][nextnode.id] = nextnode
 
             # follow provenance along this activity(flow)
-            prov = find_activity(wi.informant, prov, backcountdown,
+            prov = find_activity(nextnode, prov, backcountdown,
                 allbackward=allbackward,
+                direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
                 agent_flag=agent_flag)
@@ -177,23 +225,49 @@ def find_activity(activity, prov, backcountdown, allbackward=False, members_flag
     # we won't check reverse direction, i.e. do not check, if this activity
     # has informed other activities (no future tracking)
 
-    # used relations
-    queryset = Used.objects.filter(activity=activity.id)
-    for u in queryset:
-        # add used-link, if not yet done
-        if u.id not in prov['used']:
-            prov['used'][u.id] = u
+    if direction == 'BACK':
+        # used relations
+        queryset = Used.objects.filter(activity=activity.id)
+        for u in queryset:
+            # add used-link, if not yet done
+            if u.id not in prov['used']:
+                prov['used'][u.id] = u
 
-        # add entity to prov, if not yet done
-        if u.entity.id not in prov['entity']:
-            prov['entity'][u.entity.id] = u.entity
+            # add entity to prov, if not yet done
+            if u.entity.id not in prov['entity']:
+                prov['entity'][u.entity.id] = u.entity
 
-            # follow this entity's provenance (always)
-            prov = find_entity(u.entity, prov, backcountdown,
-                allbackward=allbackward,
-                members_flag=members_flag,
-                steps_flag=steps_flag,
-                agent_flag=agent_flag)
+                # follow this entity's provenance (always)
+                prov = find_entity(u.entity, prov, backcountdown,
+                    allbackward=allbackward,
+                    direction=direction,
+                    members_flag=members_flag,
+                    steps_flag=steps_flag,
+                    agent_flag=agent_flag)
+
+    else:
+        # need to find produced entities
+
+        # wasGeneratedBy
+        queryset = WasGeneratedBy.objects.filter(activity=activity.id)
+        for wg in queryset:
+            # add wasGeneratedBy-link
+            if wg.id not in prov['wasGeneratedBy']:
+                prov['wasGeneratedBy'][wg.id] = wg
+
+            # add entity to prov-list, if not included already
+            if wg.entity.id not in prov['entity']:
+                prov['entity'][wg.entity.id] = wg.entity
+
+                # follow activity further (but only, if not visited before)
+                prov = find_entity(wg.entity, prov, backcountdown,
+                    allbackward=allbackward,
+                    direction=direction,
+                    members_flag=members_flag,
+                    steps_flag=steps_flag,
+                    agent_flag=agent_flag)
+
+
 
     # check agent relation (association)
     queryset = WasAssociatedWith.objects.filter(activity=activity.id)
@@ -211,6 +285,7 @@ def find_activity(activity, prov, backcountdown, allbackward=False, members_flag
         if agent_flag:
             prov = find_agent(wa.agent, prov, backcountdown,
                 allbackward=allbackward,
+                direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
                 agent_flag=agent_flag)
@@ -230,6 +305,7 @@ def find_activity(activity, prov, backcountdown, allbackward=False, members_flag
             # follow provenance along this activity(flow)
             prov = find_activity(h.activityFlow, prov, backcountdown,
                 allbackward=allbackward,
+                direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
                 agent_flag=agent_flag)
@@ -251,6 +327,7 @@ def find_activity(activity, prov, backcountdown, allbackward=False, members_flag
                 # follow provenance along this activity(flow)
                 prov = find_activity(h.activity, prov, backcountdown,
                     allbackward=allbackward,
+                    direction=direction,
                     members_flag=members_flag,
                     steps_flag=steps_flag,
                     agent_flag=agent_flag)
@@ -270,7 +347,7 @@ def get_activity_type(activity_id):
     return activity_type
 
 
-def find_agent(agent, prov, backcountdown, allbackward=False, members_flag=False, steps_flag=False, agent_flag=False):
+def find_agent(agent, prov, backcountdown, allbackward=False, direction='BACK', members_flag=False, steps_flag=False, agent_flag=False):
     if backcountdown == 0:
         return prov
 
@@ -295,6 +372,7 @@ def find_agent(agent, prov, backcountdown, allbackward=False, members_flag=False
             # follow provenance along this activity(flow)
             prov = find_activity(wa.activity, prov, backcountdown,
                 allbackward=allbackward,
+                direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
                 agent_flag=agent_flag)
@@ -313,6 +391,7 @@ def find_agent(agent, prov, backcountdown, allbackward=False, members_flag=False
             # follow further
             prov = find_entity(wa.entity, prov, backcountdown,
                 allbackward=allbackward,
+                direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
                 agent_flag=agent_flag)
