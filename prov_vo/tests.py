@@ -107,11 +107,88 @@ class WasGeneratedBy_TestCase(TestCase):
     def test_getWasGeneratedBy(self):
         qset = WasGeneratedBy.objects.get(entity="rave:data")
         self.assertEqual(qset.entity.name, "RAVE data")
-        self.assertEqual(qset.activity.id, "myactivity")
+        self.assertEqual(qset.activity.id, "rave:act")
 
 
 # View tests
-class ProvDAL_TestCase(TestCase):
+class ProvDAL_Accept_TestCase(TestCase):
+
+    def setUp(self):
+        a = Entity.objects.create(id="ex:ent", name="An example entity")
+        a.save()
+
+    def test_get_format_default(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""entity(ex:ent, [voprov:name="An example entity"])
+"""
+        self.assertEqual(content, expected)
+
+    def test_get_format_default2(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent', HTTP_ACCEPT="*/*")
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""entity(ex:ent, [voprov:name="An example entity"])
+"""
+        self.assertEqual(content, expected)
+
+    def test_get_format_provn1(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&FORMAT=PROV-N', HTTP_ACCEPT="*/*")
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_format_provn2(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&FORMAT=PROV-N', HTTP_ACCEPT="text/*")
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_format_provn3(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&FORMAT=PROV-N', HTTP_ACCEPT="text/plain")
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_format_provn_wrongaccept(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&FORMAT=PROV-N', HTTP_ACCEPT="application/json")
+        self.assertEqual(response.status_code, 406)
+
+    def test_get_format_provjson1(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&FORMAT=PROV-JSON', HTTP_ACCEPT="*/*")
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_format_provjson2(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&FORMAT=PROV-JSON', HTTP_ACCEPT="application/*")
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_format_provjson3(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&FORMAT=PROV-JSON', HTTP_ACCEPT="application/json")
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_format_provjson_wrongaccept(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&FORMAT=PROV-JSON', HTTP_ACCEPT="application/xml")
+        self.assertEqual(response.status_code, 406)
+
+    def test_get_format_unsupported(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&FORMAT=HUBBA')
+        self.assertEqual(response.status_code, 415)
+
+    def test_get_format_unsupportedaccept(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent', HTTP_ACCEPT="image/png")
+        self.assertEqual(response.status_code, 415)
+
+
+class ProvDAL_General_TestCase(TestCase):
 
     def setUp(self):
         a = Activity.objects.create(id="rave:act", name="myactivity")
