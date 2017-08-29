@@ -405,16 +405,16 @@ def provdal(request):
             {'url': reverse('prov_vo:provdal') + "?%sDEPTH=%s&DIRECTION=%s&MEMBERS=%s&STEPS=%s&AGENT=%s&FORMAT=GRAPH-JSON&MODEL=%s" % (ids, str(depth), str(direction), str(members), str(steps), str(agent), str(model))})
 
     # check flags
-    backcountdown = -1
-    allbackward = False
+    countdown = -1
+    all_flag = False
     if depth.upper() == "ALL":
         # will search for all further provenance, recursively
-        backcountdown = -1
-        allbackward = True
+        countdown = -1
+        all_flag = True
     elif depth.isdigit():
         # follow at most backward relations along provenance history
-        backcountdown = int(depth)
-        allbackward = False
+        countdown = int(depth)
+        all_flag = False
     else:
         # raise error: not supported
         raise ValidationError(
@@ -473,8 +473,8 @@ def provdal(request):
             entity = Entity.objects.get(id=obj_id)
             # store current entity in dict and search for provenance:
             prov['entity'][entity.id] = entity
-            prov = utils.find_entity(entity, prov, backcountdown,
-                allbackward=allbackward,
+            prov = utils.find_entity(entity, prov, countdown,
+                all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
@@ -491,8 +491,8 @@ def provdal(request):
             activity_type = utils.get_activity_type(obj_id)
 
             prov[activity_type][activity.id] = activity
-            prov = utils.find_activity(activity, prov, backcountdown,
-                allbackward=allbackward,
+            prov = utils.find_activity(activity, prov, countdown,
+                all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
@@ -504,8 +504,8 @@ def provdal(request):
             agent = Agent.objects.get(id=obj_id)
             prov['agent'][agent.id] = agent
             if agent_flag:
-                prov = utils.find_agent(agent, prov, backcountdown,
-                    allbackward=allbackward,
+                prov = utils.find_agent(agent, prov, countdown,
+                    all_flag=all_flag,
                     direction=direction,
                     members_flag=members_flag,
                     steps_flag=steps_flag,
