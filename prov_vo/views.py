@@ -357,7 +357,7 @@ def provdal(request):
             return HttpResponse(responsestr, status=415, content_type='text/plain; charset=utf-8')
 
     #print 'http_accept: ', http_accept
-    if format not in "PROV-N PROV-JSON GRAPH":
+    if format not in "PROV-N PROV-JSON GRAPH GRAPH-JSON":
         # 415 Unsupported media type
         responsestr = "Sorry, media type %s was requested, but is not supported by this service." % http_accept
         return HttpResponse(responsestr, status=415, content_type='text/plain; charset=utf-8')
@@ -378,6 +378,13 @@ def provdal(request):
         #print 'use PROV-JSON'
         pass
     elif (format == 'GRAPH' and (\
+            http_accept.find('text/*') >= 0
+            or http_accept.find("text/html") >= 0
+            or http_accept.find("*/*") >= 0)
+        ):
+        #print 'use GRAPH'
+        pass
+    elif (format == 'GRAPH-JSON' and (\
             http_accept.find('text/*') >= 0
             or http_accept.find("text/html") >= 0
             or http_accept.find("*/*") >= 0)
