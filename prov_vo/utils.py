@@ -94,8 +94,9 @@ def track_entity(entity, prov, countdown, all_flag=False, direction='BACK', memb
                 prov['used'][u.id] = u
 
             # add activity to prov, if not yet done
-            if u.activity.id not in prov['activity']:
-                prov['activity'][u.activity.id] = u.activity
+            activity_type = get_activity_type(wg.activity.id)
+            if u.activity.id not in prov[activity_type]:
+                prov[activity_type][u.activity.id] = u.activity
 
                 # follow this activity's provenance (always)
                 prov = track_activity(u.activity, prov, countdown,
