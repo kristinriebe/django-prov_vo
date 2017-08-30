@@ -111,6 +111,7 @@ class WasGeneratedBy_TestCase(TestCase):
 
 
 # View tests
+# ==========
 class ProvDAL_Accept_TestCase(TestCase):
 
     def setUp(self):
@@ -234,6 +235,53 @@ class ProvDAL_General_TestCase(TestCase):
         numlines = len(found)
         self.assertEqual(numlines, 0)
 
+    def test_getProvdalActivityID(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:act&DEPTH=0&FORMAT=PROV-N')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = """activity(rave:act, -, -, [voprov:name="myactivity"])\n"""
+        self.assertEqual(expected, content)
+
+    def test_getProvdalEntityID(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=0&FORMAT=PROV-N')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = """entity(rave:dr4, [voprov:name="RAVE DR4"])\n"""
+        self.assertEqual(expected, content)
+
+    def test_getProvdalAgentID(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=org:rave&DEPTH=1&FORMAT=PROV-N')
+        self.assertEqual(response.status_code, 200)
+        # only the agent itself should be returned
+        content = get_content(response)
+        expected = """agent(org:rave, [voprov:name="RAVE project"])\n"""
+        self.assertEqual(expected, content)
+
+    def test_getProvdalEntityIDMultiple(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&ID=rave:obs&DEPTH=0&FORMAT=PROV-N')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = """entity(rave:dr4, [voprov:name="RAVE DR4"])
+entity(rave:obs, [voprov:name="RAVE observations"])
+"""
+        self.assertEqual(expected, content)
+
+    def test_getProvdalMixedIDs(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&ID=rave:act&ID=org:rave&DEPTH=0&FORMAT=PROV-N')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = """\
+activity(rave:act, -, -, [voprov:name="myactivity"])
+entity(rave:dr4, [voprov:name="RAVE DR4"])
+agent(org:rave, [voprov:name="RAVE project"])
+"""
+        self.assertEqual(expected, content)
+
     def test_getProvdalActivityFlow(self):
         client = Client()
         response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow&FORMAT=PROV-N')
@@ -268,17 +316,6 @@ class ProvDAL_General_TestCase(TestCase):
 
     # In this implementation, ID can also take an agent's ID, but agent relations are only
     # followed beyond the agent if AGENT option is set to TRUE
-    def test_getProvdalAgent(self):
-        client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=org:rave&DEPTH=1&FORMAT=PROV-N')
-        self.assertEqual(response.status_code, 200)
-        # only the agent itself should be returned
-        content = get_content(response)
-        expected = \
-"""agent(org:rave, [voprov:name="RAVE project"])
-"""
-        self.assertEqual(expected, content)
-
     def test_getProvdalAgentFollow(self):
         client = Client()
         response = client.get(reverse('prov_vo:provdal')+'?ID=org:rave&AGENT=TRUE&DEPTH=1&FORMAT=PROV-N')
