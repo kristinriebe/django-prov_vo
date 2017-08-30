@@ -6,7 +6,7 @@ from .models import (
 import logging
 
 
-def find_entity(entity, prov, countdown, all_flag=False, direction='BACK', members_flag=False, steps_flag=False, agent_flag=False):
+def track_entity(entity, prov, countdown, all_flag=False, direction='BACK', members_flag=False, steps_flag=False, agent_flag=False):
     if countdown == 0:
         return prov
 
@@ -42,7 +42,7 @@ def find_entity(entity, prov, countdown, all_flag=False, direction='BACK', membe
             prov['entity'][nextnode.id] = nextnode
 
             # continue with pre-decessor
-            prov = find_entity(nextnode, prov, countdown,
+            prov = track_entity(nextnode, prov, countdown,
                 all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
@@ -68,7 +68,7 @@ def find_entity(entity, prov, countdown, all_flag=False, direction='BACK', membe
                 prov[activity_type][wg.activity.id] = wg.activity
 
                 # follow activity further (but only, if not visited before)
-                prov = find_activity(wg.activity, prov, countdown,
+                prov = track_activity(wg.activity, prov, countdown,
                     all_flag=all_flag,
                     direction=direction,
                     members_flag=members_flag,
@@ -81,7 +81,7 @@ def find_entity(entity, prov, countdown, all_flag=False, direction='BACK', membe
                 # because it may happen that this path is shorter than the one
                 # before, and thus more relations need to be followed;
                 # except, if all prov. info is required anyway
-            #        prov = find_activity(wg.activity, prov, countdown, all_flag)
+            #        prov = track_activity(wg.activity, prov, countdown, all_flag)
 
     else:
         # in FORTH case, we have to find out where entities are being used:
@@ -98,7 +98,7 @@ def find_entity(entity, prov, countdown, all_flag=False, direction='BACK', membe
                 prov['activity'][u.activity.id] = u.activity
 
                 # follow this activity's provenance (always)
-                prov = find_activity(u.activity, prov, countdown,
+                prov = track_activity(u.activity, prov, countdown,
                     all_flag=all_flag,
                     direction=direction,
                     members_flag=members_flag,
@@ -121,7 +121,7 @@ def find_entity(entity, prov, countdown, all_flag=False, direction='BACK', membe
             prov['entity'][h.collection.id] = h.collection
 
             # follow further
-            prov = find_entity(h.collection, prov, countdown,
+            prov = track_entity(h.collection, prov, countdown,
                 all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
@@ -143,7 +143,7 @@ def find_entity(entity, prov, countdown, all_flag=False, direction='BACK', membe
                 prov['entity'][h.entity.id] = h.entity
 
                 # follow further
-                prov = find_entity(h.entity, prov, countdown,
+                prov = track_entity(h.entity, prov, countdown,
                     all_flag=all_flag,
                     direction=direction,
                     members_flag=members_flag,
@@ -166,7 +166,7 @@ def find_entity(entity, prov, countdown, all_flag=False, direction='BACK', membe
 
         # do not follow agent further, unless flag is set
         if agent_flag:
-            prov = find_agent(wa.agent, prov, countdown,
+            prov = track_agent(wa.agent, prov, countdown,
                 all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
@@ -178,7 +178,7 @@ def find_entity(entity, prov, countdown, all_flag=False, direction='BACK', membe
     return prov
 
 
-def find_activity(activity, prov, countdown, all_flag=False, direction='BACK', members_flag=False, steps_flag=False, agent_flag=False):
+def track_activity(activity, prov, countdown, all_flag=False, direction='BACK', members_flag=False, steps_flag=False, agent_flag=False):
     if countdown == 0:
         return prov
 
@@ -212,7 +212,7 @@ def find_activity(activity, prov, countdown, all_flag=False, direction='BACK', m
             prov[activity_type][nextnode.id] = nextnode
 
             # follow provenance along this activity(flow)
-            prov = find_activity(nextnode, prov, countdown,
+            prov = track_activity(nextnode, prov, countdown,
                 all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
@@ -232,7 +232,7 @@ def find_activity(activity, prov, countdown, all_flag=False, direction='BACK', m
                 prov['entity'][u.entity.id] = u.entity
 
                 # follow this entity's provenance (always)
-                prov = find_entity(u.entity, prov, countdown,
+                prov = track_entity(u.entity, prov, countdown,
                     all_flag=all_flag,
                     direction=direction,
                     members_flag=members_flag,
@@ -255,7 +255,7 @@ def find_activity(activity, prov, countdown, all_flag=False, direction='BACK', m
                 prov['entity'][wg.entity.id] = wg.entity
 
                 # follow activity further (but only, if not visited before)
-                prov = find_entity(wg.entity, prov, countdown,
+                prov = track_entity(wg.entity, prov, countdown,
                     all_flag=all_flag,
                     direction=direction,
                     members_flag=members_flag,
@@ -278,7 +278,7 @@ def find_activity(activity, prov, countdown, all_flag=False, direction='BACK', m
 
         # do not follow agent further, unless flag is set
         if agent_flag:
-            prov = find_agent(wa.agent, prov, countdown,
+            prov = track_agent(wa.agent, prov, countdown,
                 all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
@@ -298,7 +298,7 @@ def find_activity(activity, prov, countdown, all_flag=False, direction='BACK', m
             prov['activityFlow'][h.activityFlow.id] = h.activityFlow
 
             # follow provenance along this activity(flow)
-            prov = find_activity(h.activityFlow, prov, countdown,
+            prov = track_activity(h.activityFlow, prov, countdown,
                 all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
@@ -320,7 +320,7 @@ def find_activity(activity, prov, countdown, all_flag=False, direction='BACK', m
                 prov[activity_type][h.activity.id] = h.activity
 
                 # follow provenance along this activity(flow)
-                prov = find_activity(h.activity, prov, countdown,
+                prov = track_activity(h.activity, prov, countdown,
                     all_flag=all_flag,
                     direction=direction,
                     members_flag=members_flag,
@@ -342,7 +342,7 @@ def get_activity_type(activity_id):
     return activity_type
 
 
-def find_agent(agent, prov, countdown, all_flag=False, direction='BACK', members_flag=False, steps_flag=False, agent_flag=False):
+def track_agent(agent, prov, countdown, all_flag=False, direction='BACK', members_flag=False, steps_flag=False, agent_flag=False):
     if countdown == 0:
         return prov
 
@@ -364,7 +364,7 @@ def find_agent(agent, prov, countdown, all_flag=False, direction='BACK', members
             prov[activity_type][wa.activity.id] = wa.activity
 
             # follow provenance along this activity(flow)
-            prov = find_activity(wa.activity, prov, countdown,
+            prov = track_activity(wa.activity, prov, countdown,
                 all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
@@ -383,7 +383,7 @@ def find_agent(agent, prov, countdown, all_flag=False, direction='BACK', members
             prov['entity'][wa.entity.id] = wa.entity
 
             # follow further
-            prov = find_entity(wa.entity, prov, countdown,
+            prov = track_entity(wa.entity, prov, countdown,
                 all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,

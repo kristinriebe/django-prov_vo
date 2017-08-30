@@ -480,7 +480,7 @@ def provdal(request):
             entity = Entity.objects.get(id=obj_id)
             # store current entity in dict and search for provenance:
             prov['entity'][entity.id] = entity
-            prov = utils.find_entity(entity, prov, countdown,
+            prov = utils.track_entity(entity, prov, countdown,
                 all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
@@ -498,7 +498,7 @@ def provdal(request):
             activity_type = utils.get_activity_type(obj_id)
 
             prov[activity_type][activity.id] = activity
-            prov = utils.find_activity(activity, prov, countdown,
+            prov = utils.track_activity(activity, prov, countdown,
                 all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
@@ -511,7 +511,7 @@ def provdal(request):
             agent = Agent.objects.get(id=obj_id)
             prov['agent'][agent.id] = agent
             if agent_flag:
-                prov = utils.find_agent(agent, prov, countdown,
+                prov = utils.track_agent(agent, prov, countdown,
                     all_flag=all_flag,
                     direction=direction,
                     members_flag=members_flag,
