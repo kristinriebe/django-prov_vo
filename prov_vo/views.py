@@ -283,12 +283,19 @@ def provdal_form(request):
         # process the data in form.cleaned_data as required
             try:
                 obj_id = form.cleaned_data['obj_id']
-                backward = form.cleaned_data['backward']
-                #forward = form.cleaned_data['forward']
+                depth = form.cleaned_data['depth']
+                direction = form.cleaned_data['direction']
+                members = form.cleaned_data['members']
+                steps = form.cleaned_data['steps']
+                agent = form.cleaned_data['agent']
                 format = form.cleaned_data['format']
                 compliance = form.cleaned_data['model']
 
-                return HttpResponseRedirect(reverse('prov_vo:provdal')+"?ID=%s&BACKWARD=%s&FORMAT=%s&MODEL=%s" % (str(obj_id), str(backward), str(format), str(compliance)))
+                return HttpResponseRedirect(
+                    reverse('prov_vo:provdal')+"?ID=%s&DEPTH=%s&DIRECTION=%s&MEMBERS=%s&STEPS=%s&AGENT=%s&FORMAT=%s&MODEL=%s" %
+                    (str(obj_id), str(depth).upper(), str(direction).upper(), str(members).upper(),
+                    str(steps).upper(), str(agent).upper(), str(format).upper(),
+                    str(compliance).upper()))
 
             except ValueError:
                 form = ProvDalForm(request.POST)
@@ -305,40 +312,135 @@ def provdal_form(request):
 
 def provdal(request):
 
-    # entity_id = request.GET.get('ID') #default: None
     # There can be more than one ID given, so:
     id_list = request.GET.getlist('ID')
-    backward = request.GET.get('BACKWARD', 'ALL') # can be 0,1,2, etc. or ALL
-    #forward = request.GET.get('FORWARD', '0') # can be 0,1,2, etc. or ALL
-    format = request.GET.get('FORMAT', 'PROV-N') # can be PROV-N, PROV-JSON, VOTABLE
+    if len(id_list) == 0:
+        return HttpResponse('Bad request: the ID parameter is required.', status=400)
+
+
+    depth = request.GET.get('DEPTH', 'ALL') # can be 0,1,2, etc. or ALL
+    direction = request.GET.get('DIRECTION', 'BACK') # can be BACK or FORTH
+    format = request.GET.get('FORMAT') # can be PROV-N, PROV-JSON, VOTABLE
+    #print 'format: ', format
     model = request.GET.get('MODEL', 'IVOA')  # one of IVOA, W3C (or None?)
+
+    # new optional parameters
+    members = request.GET.get('MEMBERS', 'FALSE')  # True for tracking members of collections
+    steps = request.GET.get('STEPS', 'FALSE')   # True for tracking steps of activityFlows
+    agent = request.GET.get('AGENT', 'FALSE')   # True for tracking all relations to/from agents
+
+    #print 'meta: ', request.META
+    if 'HTTP_ACCEPT' in request.META:
+        http_accept = request.META['HTTP_ACCEPT']
+    else:
+        http_accept = "*/*"
+    #if '*/*' in request.content_type:
+    #    if format is None:
+            # set a default:
+    #        format = 'PROV-N'
+    if format is None:
+        # take format based on accept header
+        if 'application/json' in http_accept:
+            format = 'PROV-JSON'
+        elif 'text/plain' in http_accept:
+            format = 'PROV-N'
+        # set some defaults:
+        elif 'application/*' in http_accept:
+            format = 'PROV-JSON'
+        elif 'text/*' in http_accept:
+            format = 'PROV-N'
+        elif '*/*' in http_accept:
+            format = 'PROV-N'
+        else:
+            # 415 Unsupported media type
+            responsestr = "Sorry, media type %s was requested, but is not supported by this service." % http_accept
+            return HttpResponse(responsestr, status=415, content_type='text/plain; charset=utf-8')
+
+    #print 'http_accept: ', http_accept
+    if format not in "PROV-N PROV-JSON GRAPH GRAPH-JSON":
+        # 415 Unsupported media type
+        responsestr = "Sorry, media type %s was requested, but is not supported by this service." % http_accept
+        return HttpResponse(responsestr, status=415, content_type='text/plain; charset=utf-8')
+
+    # check for format and accept header compatibility
+    if (format == 'PROV-N' and (
+            http_accept.find('text/*') >= 0
+            or http_accept.find("text/plain") >= 0
+            or http_accept.find("*/*") >= 0)
+        ):
+        #print 'use PROV-N'
+        pass
+    elif (format == 'PROV-JSON' and (\
+            http_accept.find('application/*') >= 0\
+            or http_accept.find('application/json') >= 0\
+            or http_accept.find('*/*') >= 0)\
+        ):
+        #print 'use PROV-JSON'
+        pass
+    elif (format == 'GRAPH' and (\
+            http_accept.find('text/*') >= 0
+            or http_accept.find("text/html") >= 0
+            or http_accept.find("*/*") >= 0)
+        ):
+        #print 'use GRAPH'
+        pass
+    elif (format == 'GRAPH-JSON' and (\
+            http_accept.find('text/*') >= 0
+            or http_accept.find("text/html") >= 0
+            or http_accept.find("*/*") >= 0)
+        ):
+        #print 'use GRAPH'
+        pass
+    else:
+        #print "Need to complain"
+        # return 406 Not Acceptable
+        responsestr = "Sorry, format %s and media type %s were requested, but are not compatible." % (format, http_accept)
+        return HttpResponse(responsestr, status=406, content_type='text/plain; charset=utf-8')
+
+
+#        if format:
+#        'application/json'
+#        'text/plain'
+#        'text/xml', 'application/xml'
+
 
     if format == 'GRAPH':
         ids = ''
         for i in id_list:
             ids += 'ID=%s&' % i
         return render(request, 'prov_vo/provdal_graph.html',
-            {'url': reverse('prov_vo:provdal') + "?%sBACKWARD=%s&FORMAT=GRAPH-JSON&MODEL=%s" % (ids, str(backward), str(model))})
+            {'url': reverse('prov_vo:provdal') + "?%sDEPTH=%s&DIRECTION=%s&MEMBERS=%s&STEPS=%s&AGENT=%s&FORMAT=GRAPH-JSON&MODEL=%s" % (ids, str(depth), str(direction), str(members), str(steps), str(agent), str(model))})
 
-    # check step_flag, store as 'follow' for provenance functions
-    backcountdown = -1    
-    if backward == "ALL":
-        # will search for further provenance, recursively
-        follow = True # always
-        backcountdown = -1
-    elif backward == "1":
-        # will just go back one step (backwards in time)
-        follow = False
-    elif backward.isdigit():
-        backcountdown = int(backward)
-        follow = True
+    # check flags
+    countdown = -1
+    all_flag = False
+    if depth.upper() == "ALL":
+        # will search for all further provenance, recursively
+        countdown = -1
+        all_flag = True
+    elif depth.isdigit():
+        # follow at most backward relations along provenance history
+        countdown = int(depth)
+        all_flag = False
     else:
         # raise error: not supported
         raise ValidationError(
             'Invalid value: %(value)s is not supported',
             code='invalid',
-            params={'value': backward},
+            params={'value': depth},
         )
+
+    # check optional parameter values
+    members_flag = False
+    steps_flag = False
+    agent_flag = False
+
+    if members.upper() == 'TRUE':
+        members_flag = True
+    if steps.upper() == 'TRUE':
+        steps_flag = True
+    if agent.upper() == 'TRUE':
+        agent_flag = True
 
     prefix = {
         "voprov": "http://www.ivoa.net/documents/ProvenanceDM/voprov/",
@@ -378,7 +480,13 @@ def provdal(request):
             entity = Entity.objects.get(id=obj_id)
             # store current entity in dict and search for provenance:
             prov['entity'][entity.id] = entity
-            prov = utils.find_entity(entity, prov, backcountdown, follow=follow)
+            prov = utils.track_entity(entity, prov, countdown,
+                all_flag=all_flag,
+                direction=direction,
+                members_flag=members_flag,
+                steps_flag=steps_flag,
+                agent_flag=agent_flag)
+
         except Entity.DoesNotExist:
             pass
             # do not return, just continue with other ids
@@ -390,10 +498,27 @@ def provdal(request):
             activity_type = utils.get_activity_type(obj_id)
 
             prov[activity_type][activity.id] = activity
-            prov = utils.find_activity(activity, prov, backcountdown, follow=follow)
+            prov = utils.track_activity(activity, prov, countdown,
+                all_flag=all_flag,
+                direction=direction,
+                members_flag=members_flag,
+                steps_flag=steps_flag,
+                agent_flag=agent_flag)
         except Activity.DoesNotExist:
             pass
 
+        try:
+            agent = Agent.objects.get(id=obj_id)
+            prov['agent'][agent.id] = agent
+            if agent_flag:
+                prov = utils.track_agent(agent, prov, countdown,
+                    all_flag=all_flag,
+                    direction=direction,
+                    members_flag=members_flag,
+                    steps_flag=steps_flag,
+                    agent_flag=agent_flag)
+        except Agent.DoesNotExist:
+            pass
 
     # The prov dictionary now contains the complete provenance information,
     # for all given entity ids,
@@ -431,5 +556,6 @@ def provdal(request):
 
     else:
         # format is not known, return error
+        # 415 Unsupported media type
         provstr = "Sorry, unknown format %s was requested, cannot handle this." % format
-        return HttpResponse(provstr, content_type='text/plain; charset=utf-8')
+        return HttpResponse(provstr, status=415, content_type='text/plain; charset=utf-8')
