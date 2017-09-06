@@ -1,5 +1,6 @@
 import datetime
 import re
+import json
 
 from django.core.urlresolvers import reverse
 from django.utils import timezone
@@ -122,20 +123,18 @@ class ProvDAL_Accept_TestCase(TestCase):
         client = Client()
         response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent')
         self.assertEqual(response.status_code, 200)
-        content = get_content(response)
-        expected = \
-"""entity(ex:ent, [voprov:name="An example entity"])
-"""
+        content = json.loads(response.content)
+        content.pop('prefix', None)  # remove prefix
+        expected = {'entity': {'ex:ent': {'voprov:id': 'ex:ent', 'voprov:name': 'An example entity'}}}
         self.assertEqual(content, expected)
 
     def test_get_format_default2(self):
         client = Client()
         response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent', HTTP_ACCEPT="*/*")
         self.assertEqual(response.status_code, 200)
-        content = get_content(response)
-        expected = \
-"""entity(ex:ent, [voprov:name="An example entity"])
-"""
+        content = json.loads(response.content)
+        content.pop('prefix', None)  # remove prefix
+        expected = {'entity': {'ex:ent': {'voprov:id': 'ex:ent', 'voprov:name': 'An example entity'}}}
         self.assertEqual(content, expected)
 
     def test_get_format_provn1(self):
@@ -234,6 +233,16 @@ class ProvDAL_General_TestCase(TestCase):
         found = re.findall(r"^act.*", response.content, flags=re.MULTILINE)
         numlines = len(found)
         self.assertEqual(numlines, 0)
+
+    def test_get_caseinsensitive(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?id=rave:obs&forMAt=PROV-N')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""entity(rave:obs, [voprov:name="RAVE observations"])
+"""
+        self.assertEqual(content, expected)
 
     def test_getProvdalActivityID(self):
         client = Client()

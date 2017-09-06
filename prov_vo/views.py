@@ -14,6 +14,7 @@ from django.http import JsonResponse
 from django.db.models.fields.related import ManyToManyField
 from django.core import serializers
 from django.views.decorators.csrf import csrf_exempt
+from django.http import QueryDict
 
 from braces.views import JSONResponseMixin
 
@@ -309,18 +310,57 @@ def provdal_form(request):
 
     return render(request, 'prov_vo/provdalform.html', {'form': form})
 
+def get_urlparam(g, paramname, multi=False, required=False, default=None):
+    if paramname in g:
+        value = g[paramname]
+        #print 'value: ', value
+    else:
+        if required == True:
+            return None, HttpResponse('Bad request: the ID parameter is required.', status=400)
+        else:
+            return default, None  # even if default is None
+
+    if len(value) == 1:
+        if multi == False:
+            return value[0], None
+        else:
+            return value, None
+    else:
+        if multi == False:
+            return None, HttpResponse('Bad request: the %s parameter must occur only once or not at all.' % (paramname), status=400)
+        else:
+            return value, None
 
 def provdal(request):
 
-    # There can be more than one ID given, so:
-    id_list = request.GET.getlist('ID')
-    if len(id_list) == 0:
-        return HttpResponse('Bad request: the ID parameter is required.', status=400)
+    # Make a copy of request.GET dictionary and make all keys
+    # upper case, because GET parameters need to be treated
+    # case-insensitive according to DALI spec
+    # (but not their values)
+    #for key, value in request.GET.iterlists():
+    #    print 'request: ', key, value
+    #g = request.GET.copy()
+    g = {}
+    for key, value in request.GET.iterlists():
+        g[key.upper()] = value
 
+    # There can be more than one ID given, thus use getlist:
+    id_list, e = get_urlparam(g, 'ID', multi=True, required=True)
+    #print 'id_list, e: ', id_list,e
+    if e:
+        return e
 
-    depth = request.GET.get('DEPTH', 'ALL') # can be 0,1,2, etc. or ALL
-    direction = request.GET.get('DIRECTION', 'BACK') # can be BACK or FORTH
-    format = request.GET.get('FORMAT') # can be PROV-N, PROV-JSON, VOTABLE
+    depth, e = get_urlparam(g, 'DEPTH', default='1') # can be 0,1,2, etc. or ALL
+    #print 'depth, e: ', depth, e
+    if e:
+        return e
+    direction, e = get_urlparam(g, 'DIRECTION', default='BACK') # can be BACK or FORTH
+    #print 'direction, e: ', direction, e
+    if e:
+        return e
+    format, e = get_urlparam(g, 'FORMAT') #, -- set default below, after accept header, default='PROV-JSON') # can be PROV-N, PROV-JSON, VOTABLE
+    if e:
+        return e
     #print 'format: ', format
     model = request.GET.get('MODEL', 'IVOA')  # one of IVOA, W3C (or None?)
 
@@ -350,7 +390,8 @@ def provdal(request):
         elif 'text/*' in http_accept:
             format = 'PROV-N'
         elif '*/*' in http_accept:
-            format = 'PROV-N'
+            # set a default format here:
+            format = 'PROV-JSON'
         else:
             # 415 Unsupported media type
             responsestr = "Sorry, media type %s was requested, but is not supported by this service." % http_accept
@@ -414,7 +455,7 @@ def provdal(request):
     # check flags
     countdown = -1
     all_flag = False
-    if depth.upper() == "ALL":
+    if str(depth).upper() == "ALL":
         # will search for all further provenance, recursively
         countdown = -1
         all_flag = True
@@ -475,7 +516,7 @@ def provdal(request):
 
     # Note: even if collection class is used, Entity.objects.all() still contains all entities
     for obj_id in id_list:
-
+        #print 'obj_id: ', obj_id
         try:
             entity = Entity.objects.get(id=obj_id)
             # store current entity in dict and search for provenance:
