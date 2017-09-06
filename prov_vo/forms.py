@@ -19,7 +19,7 @@ class ProvDalForm(forms.Form):
         choices=[('1', '1'), ('2', '2'), ('3','3'), ('4', '4'), ('5', '5'), ('0', '0'), ('ALL','all')],
         widget=forms.Select(),
         help_text="Specify number of relations to be tracked",
-        initial='ALL'
+        initial='1'
     )
     direction = forms.ChoiceField(
         label="Direction",
