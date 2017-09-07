@@ -15,6 +15,7 @@ from django.db.models.fields.related import ManyToManyField
 from django.core import serializers
 from django.views.decorators.csrf import csrf_exempt
 from django.http import QueryDict
+from django.utils.datastructures import MultiValueDict
 
 from braces.views import JSONResponseMixin
 
@@ -316,7 +317,7 @@ def get_urlparam(g, paramname, multi=False, required=False, default=None):
         #print 'value: ', value
     else:
         if required == True:
-            return None, HttpResponse('Bad request: the ID parameter is required.', status=400)
+            return None, HttpResponse('Bad request: the %s parameter is required.' % (paramname), status=400)
         else:
             return default, None  # even if default is None
 
@@ -331,43 +332,133 @@ def get_urlparam(g, paramname, multi=False, required=False, default=None):
         else:
             return value, None
 
+class QueryDictDALI(QueryDict):
+    """
+    Same as QueryDict class, but allows retrieval of URL parameter values
+    with case-insensitive parameters as required by VO's DALI spec
+
+    Example:
+    QueryDict.get('ID') and QueryDict.get('id') should both return the same result.
+
+    ... maybe that's not the problem.
+    Actually, need to enforce single value if expecting single value
+    And that required parameters exist.
+    """
+
+    def __init__(self, querydict=None):
+        super(QueryDictDALI, self).__init__()
+        self._mutable = True
+        if querydict:
+
+            # copy values
+            for key, values in querydict.iterlists():
+                self.setlist(key, values)
+
+            # make it all upper case
+            self.make_upper_case_parameter_names()
+
+
+    def getsingle(self, key, default=None):
+        """
+        Return the data value for the passed key. If key doesn't exist
+        or value is an empty list, return `default`.
+        Ensure that the key occured only one single time, otherwise raise error
+        """
+        try:
+            val = self.getlist(key)
+        except KeyError:
+            return default
+        if val == []:
+            return default
+        if isinstance(val, list) and len(val) > 1:
+            raise ValueError('Bad request: parameter %s should occur only once.' % key)
+
+        return val[0]
+
+    def make_upper_case_parameter_names(self):
+        for key in self.keys():
+
+            if key.upper() != key:
+                values = self.getlist(key)
+
+                if key.upper() in self:
+                    oldvalues = self.getlist(key.upper())
+                    self.setlist(key.upper(), oldvalues + values)
+                else:
+                    self.setlist(key.upper(), values)
+
+                # delete this key entry
+                self.pop(key)
+
+
+def upper_case_params_querydict(querydict):
+    updict = querydict.copy()
+
+    for key in updict.keys():
+
+        if key.upper() != key:
+            values = updict.getlist(key)
+
+            if key.upper() in updict:
+                oldvalues = updict.getlist(key.upper())
+                updict.setlist(key.upper(), oldvalues + values)
+            else:
+                updict.setlist(key.upper(), values)
+
+            # delete this key entry
+            updict.pop(key)
+
+    return updict
+
+
 def provdal(request):
 
     # Make a copy of request.GET dictionary and make all keys
     # upper case, because GET parameters need to be treated
     # case-insensitive according to DALI spec
     # (but not their values)
-    #for key, value in request.GET.iterlists():
-    #    print 'request: ', key, value
-    #g = request.GET.copy()
-    g = {}
-    for key, value in request.GET.iterlists():
-        g[key.upper()] = value
+
+    h = QueryDictDALI(querydict=request.GET) #make a copy from req.GET right here?
+    #h = upper_case_params_querydict(request.GET)
 
     # There can be more than one ID given, thus use getlist:
-    id_list, e = get_urlparam(g, 'ID', multi=True, required=True)
-    #print 'id_list, e: ', id_list,e
-    if e:
-        return e
+    if 'ID' not in h:
+        return HttpResponse('Bad request: the ID parameter is required.', status=400)
+    id_list = h.getlist('ID')
 
-    depth, e = get_urlparam(g, 'DEPTH', default='1') # can be 0,1,2, etc. or ALL
-    #print 'depth, e: ', depth, e
-    if e:
-        return e
-    direction, e = get_urlparam(g, 'DIRECTION', default='BACK') # can be BACK or FORTH
-    #print 'direction, e: ', direction, e
-    if e:
-        return e
-    format, e = get_urlparam(g, 'FORMAT') #, -- set default below, after accept header, default='PROV-JSON') # can be PROV-N, PROV-JSON, VOTABLE
-    if e:
-        return e
-    #print 'format: ', format
-    model = request.GET.get('MODEL', 'IVOA')  # one of IVOA, W3C (or None?)
+    try:
+        depth = h.getsingle('DEPTH', default='1')
+    except ValueError as e:
+        return HttpResponse(e.message, status=400)
+
+    try:
+        direction = h.getsingle('DIRECTION', default='BACK')
+    except ValueError as e:
+        return HttpResponse(e.message, status=400)
+
+    try:
+        format = h.getsingle('FORMAT')  # set default after evaluating accept-header
+    except ValueError as e:
+        return HttpResponse(e.message, status=400)
+
+    try:
+        model = h.getsingle('MODEL', 'IVOA')  # one of IVOA, W3C (or None?)
+    except ValueError as e:
+        return HttpResponse(e.message, status=400)
 
     # new optional parameters
-    members = request.GET.get('MEMBERS', 'FALSE')  # True for tracking members of collections
-    steps = request.GET.get('STEPS', 'FALSE')   # True for tracking steps of activityFlows
-    agent = request.GET.get('AGENT', 'FALSE')   # True for tracking all relations to/from agents
+    try:
+        members = request.GET.get('MEMBERS', 'FALSE')  # True for tracking members of collections
+    except ValueError as e:
+        return HttpResponse(e.message, status=400)
+    try:
+        steps = request.GET.get('STEPS', 'FALSE')   # True for tracking steps of activityFlows
+    except ValueError as e:
+        return HttpResponse(e.message, status=400)
+    try:
+        agent = request.GET.get('AGENT', 'FALSE')   # True for tracking all relations to/from agents
+    except ValueError as e:
+        return HttpResponse(e.message, status=400)
 
     #print 'meta: ', request.META
     if 'HTTP_ACCEPT' in request.META:
@@ -394,13 +485,13 @@ def provdal(request):
             format = 'PROV-JSON'
         else:
             # 415 Unsupported media type
-            responsestr = "Sorry, media type %s was requested, but is not supported by this service." % http_accept
+            responsestr = "Sorry, media type '%s' was requested, but is not supported by this service." % http_accept
             return HttpResponse(responsestr, status=415, content_type='text/plain; charset=utf-8')
 
     #print 'http_accept: ', http_accept
     if format not in "PROV-N PROV-JSON GRAPH GRAPH-JSON":
         # 415 Unsupported media type
-        responsestr = "Sorry, media type %s was requested, but is not supported by this service." % http_accept
+        responsestr = "Sorry, format '%s' was requested, but is not supported by this service." % format
         return HttpResponse(responsestr, status=415, content_type='text/plain; charset=utf-8')
 
     # check for format and accept header compatibility
@@ -437,12 +528,6 @@ def provdal(request):
         # return 406 Not Acceptable
         responsestr = "Sorry, format %s and media type %s were requested, but are not compatible." % (format, http_accept)
         return HttpResponse(responsestr, status=406, content_type='text/plain; charset=utf-8')
-
-
-#        if format:
-#        'application/json'
-#        'text/plain'
-#        'text/xml', 'application/xml'
 
 
     if format == 'GRAPH':

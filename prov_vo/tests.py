@@ -244,6 +244,33 @@ class ProvDAL_General_TestCase(TestCase):
 """
         self.assertEqual(content, expected)
 
+    def test_get_caseinsensitive_multi(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?id=rave:obs&ID=rave:dr4&FORMAT=PROV-N&DEPTH=0')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""entity(rave:dr4, [voprov:name="RAVE DR4"])
+entity(rave:obs, [voprov:name="RAVE observations"])
+"""
+        self.assertEqual(content, expected)
+
+    def test_get_multisinglevalues_depth(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=1&DEPTH=3')
+        self.assertEqual(response.status_code, 400)
+        content = get_content(response)
+        expected = "Bad request: parameter DEPTH should occur only once."
+        self.assertEqual(content, expected)
+
+    def test_get_multisinglevalues_format(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&FORMAT=PROV-N&FORMAT=PROV-JSON')
+        self.assertEqual(response.status_code, 400)
+        content = get_content(response)
+        expected = "Bad request: parameter FORMAT should occur only once."
+        self.assertEqual(content, expected)
+
     def test_getProvdalActivityID(self):
         client = Client()
         response = client.get(reverse('prov_vo:provdal')+'?ID=rave:act&DEPTH=0&FORMAT=PROV-N')
