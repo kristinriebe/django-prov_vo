@@ -5,7 +5,8 @@ from datetime import datetime
 from django.conf import settings
 
 from django.shortcuts import get_object_or_404, render
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseServerError
+from django.http import Http404
 #from django.template import loader
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
@@ -25,6 +26,9 @@ from rest_framework.response import Response
 from rest_framework import viewsets
 
 import utils
+from utils import InvalidData
+from utils import QueryDictDALI
+from decorators import exceptions_to_http_status
 
 from .models import (
     Activity,
@@ -311,106 +315,8 @@ def provdal_form(request):
 
     return render(request, 'prov_vo/provdalform.html', {'form': form})
 
-def get_urlparam(g, paramname, multi=False, required=False, default=None):
-    if paramname in g:
-        value = g[paramname]
-        #print 'value: ', value
-    else:
-        if required == True:
-            return None, HttpResponse('Bad request: the %s parameter is required.' % (paramname), status=400)
-        else:
-            return default, None  # even if default is None
 
-    if len(value) == 1:
-        if multi == False:
-            return value[0], None
-        else:
-            return value, None
-    else:
-        if multi == False:
-            return None, HttpResponse('Bad request: the %s parameter must occur only once or not at all.' % (paramname), status=400)
-        else:
-            return value, None
-
-class QueryDictDALI(QueryDict):
-    """
-    Same as QueryDict class, but allows retrieval of URL parameter values
-    with case-insensitive parameters as required by VO's DALI spec
-
-    Example:
-    QueryDict.get('ID') and QueryDict.get('id') should both return the same result.
-
-    ... maybe that's not the problem.
-    Actually, need to enforce single value if expecting single value
-    And that required parameters exist.
-    """
-
-    def __init__(self, querydict=None):
-        super(QueryDictDALI, self).__init__()
-        self._mutable = True
-        if querydict:
-
-            # copy values
-            for key, values in querydict.iterlists():
-                self.setlist(key, values)
-
-            # make it all upper case
-            self.make_upper_case_parameter_names()
-
-
-    def getsingle(self, key, default=None):
-        """
-        Return the data value for the passed key. If key doesn't exist
-        or value is an empty list, return `default`.
-        Ensure that the key occured only one single time, otherwise raise error
-        """
-        try:
-            val = self.getlist(key)
-        except KeyError:
-            return default
-        if val == []:
-            return default
-        if isinstance(val, list) and len(val) > 1:
-            raise ValueError('Bad request: parameter %s should occur only once.' % key)
-
-        return val[0]
-
-    def make_upper_case_parameter_names(self):
-        for key in self.keys():
-
-            if key.upper() != key:
-                values = self.getlist(key)
-
-                if key.upper() in self:
-                    oldvalues = self.getlist(key.upper())
-                    self.setlist(key.upper(), oldvalues + values)
-                else:
-                    self.setlist(key.upper(), values)
-
-                # delete this key entry
-                self.pop(key)
-
-
-def upper_case_params_querydict(querydict):
-    updict = querydict.copy()
-
-    for key in updict.keys():
-
-        if key.upper() != key:
-            values = updict.getlist(key)
-
-            if key.upper() in updict:
-                oldvalues = updict.getlist(key.upper())
-                updict.setlist(key.upper(), oldvalues + values)
-            else:
-                updict.setlist(key.upper(), values)
-
-            # delete this key entry
-            updict.pop(key)
-
-    return updict
-
-
+@exceptions_to_http_status
 def provdal(request):
 
     # Make a copy of request.GET dictionary and make all keys
@@ -426,41 +332,18 @@ def provdal(request):
         return HttpResponse('Bad request: the ID parameter is required.', status=400)
     id_list = h.getlist('ID')
 
-    try:
-        depth = h.getsingle('DEPTH', default='1')
-    except ValueError as e:
-        return HttpResponse(e.message, status=400)
+    depth = h.getsingle('DEPTH', default='1')
+    direction = h.getsingle('DIRECTION', default='BACK')
+    format = h.getsingle('FORMAT')  # set default after evaluating accept-header
 
-    try:
-        direction = h.getsingle('DIRECTION', default='BACK')
-    except ValueError as e:
-        return HttpResponse(e.message, status=400)
-
-    try:
-        format = h.getsingle('FORMAT')  # set default after evaluating accept-header
-    except ValueError as e:
-        return HttpResponse(e.message, status=400)
-
-    try:
-        model = h.getsingle('MODEL', 'IVOA')  # one of IVOA, W3C (or None?)
-    except ValueError as e:
-        return HttpResponse(e.message, status=400)
+    # only in this implementation, not mentioned in standard
+    model = h.getsingle('MODEL', 'IVOA')  # one of IVOA, W3C (or None?)
 
     # new optional parameters
-    try:
-        members = request.GET.get('MEMBERS', 'FALSE')  # True for tracking members of collections
-    except ValueError as e:
-        return HttpResponse(e.message, status=400)
-    try:
-        steps = request.GET.get('STEPS', 'FALSE')   # True for tracking steps of activityFlows
-    except ValueError as e:
-        return HttpResponse(e.message, status=400)
-    try:
-        agent = request.GET.get('AGENT', 'FALSE')   # True for tracking all relations to/from agents
-    except ValueError as e:
-        return HttpResponse(e.message, status=400)
+    members = h.getsingle('MEMBERS', 'FALSE')  # True for tracking members of collections
+    steps = h.getsingle('STEPS', 'FALSE')   # True for tracking steps of activityFlows
+    agent = h.getsingle('AGENT', 'FALSE')   # True for tracking all relations to/from agents
 
-    #print 'meta: ', request.META
     if 'HTTP_ACCEPT' in request.META:
         http_accept = request.META['HTTP_ACCEPT']
     else:
@@ -488,7 +371,6 @@ def provdal(request):
             responsestr = "Sorry, media type '%s' was requested, but is not supported by this service." % http_accept
             return HttpResponse(responsestr, status=415, content_type='text/plain; charset=utf-8')
 
-    #print 'http_accept: ', http_accept
     if format not in "PROV-N PROV-JSON GRAPH GRAPH-JSON":
         # 415 Unsupported media type
         responsestr = "Sorry, format '%s' was requested, but is not supported by this service." % format
@@ -545,7 +427,7 @@ def provdal(request):
         countdown = -1
         all_flag = True
     elif depth.isdigit():
-        # follow at most backward relations along provenance history
+        # follow at most this number of relations along provenance history
         countdown = int(depth)
         all_flag = False
     else:

@@ -255,20 +255,13 @@ entity(rave:obs, [voprov:name="RAVE observations"])
 """
         self.assertEqual(content, expected)
 
-    def test_get_multisinglevalues_depth(self):
+    def test_get_multisinglevalues(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=1&DEPTH=3')
-        self.assertEqual(response.status_code, 400)
-        content = get_content(response)
-        expected = "Bad request: parameter DEPTH should occur only once."
-        self.assertEqual(content, expected)
-
-    def test_get_multisinglevalues_format(self):
-        client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&FORMAT=PROV-N&FORMAT=PROV-JSON')
-        self.assertEqual(response.status_code, 400)
-        content = get_content(response)
-        expected = "Bad request: parameter FORMAT should occur only once."
+        for param in ['FORMAT', 'DEPTH', 'MODEL', 'MEMBERS', 'STEPS', 'AGENT', 'DIRECTION']:
+            response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&%s=1&%s=2' % (param, param))
+            self.assertEqual(response.status_code, 400)
+            content = response.content
+            expected = "Bad request: parameter %s must occur only once or not at all." % (param)
         self.assertEqual(content, expected)
 
     def test_getProvdalActivityID(self):

@@ -4,6 +4,71 @@ from .models import (
     WasInformedBy, HadStep, ActivityFlow, Collection
 )
 import logging
+from django.http import QueryDict
+
+class InvalidData(Exception):
+    pass
+
+
+class QueryDictDALI(QueryDict):
+    """
+    Same as QueryDict class, but can turn URL parameter names to
+    upper case so they can be treated as case-insensitive as
+    required by VO's DALI spec.
+    Also provides the function getsingle for getting the single value
+    of a parameter that shall occur only once (at most), and raises
+    a ValueError if this is violated.
+
+    Example:
+    QueryDictDALI.getlist('ID') will return values parameter ID, id, Id and iD.
+    Actually, need to enforce single value if expecting single value
+    And that required parameters exist.
+    """
+
+    def __init__(self, querydict=None, uppercase=True):
+        super(QueryDictDALI, self).__init__()
+        self._mutable = True
+        if querydict:
+
+            # copy values
+            for key, values in querydict.iterlists():
+                self.setlist(key, values)
+
+            # make it all upper case
+            if uppercase:
+                self.make_upper_case_parameter_names()
+
+    def getsingle(self, key, default=None):
+        """
+        Return the data value for the passed key. If key doesn't exist
+        or value is an empty list, return `default`.
+        Ensure that the key occured at most one single time, otherwise raise error
+        """
+        try:
+            val = self.getlist(key)
+        except KeyError:
+            return default
+        if val == []:
+            return default
+        if len(list(val)) > 1:
+           raise InvalidData('Bad request: parameter %s must occur only once or not at all.' % key)
+        return val[0]
+
+    def make_upper_case_parameter_names(self):
+        for key in self.keys():
+
+            if key.upper() != key:
+                values = self.getlist(key)
+
+                if key.upper() in self:
+                    oldvalues = self.getlist(key.upper())
+                    self.setlist(key.upper(), oldvalues + values)
+                else:
+                    self.setlist(key.upper(), values)
+
+                # delete this key entry
+                self.pop(key)
+
 
 
 def track_entity(entity, prov, countdown, all_flag=False, direction='BACK', members_flag=False, steps_flag=False, agent_flag=False):
