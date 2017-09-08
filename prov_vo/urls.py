@@ -38,4 +38,5 @@ urlpatterns = [
     # graph overviews
     url(r'^graph/$', views.graph, name='graph'),
     url(r'^graph/graphjson$', views.fullgraphjson, name='graphjson'),
+
 ]

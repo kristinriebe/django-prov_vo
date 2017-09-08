@@ -26,7 +26,6 @@ from rest_framework.response import Response
 from rest_framework import viewsets
 
 import utils
-from utils import InvalidData
 from utils import QueryDictDALI
 from decorators import exceptions_to_http_status
 
@@ -432,11 +431,8 @@ def provdal(request):
         all_flag = False
     else:
         # raise error: not supported
-        raise ValidationError(
-            'Invalid value: %(value)s is not supported',
-            code='invalid',
-            params={'value': depth},
-        )
+        return HttpResponseBadRequest("Bad request: the value '%s' is not supported for parameter DEPTH" % (depth))
+
 
     # check optional parameter values
     members_flag = False
@@ -537,12 +533,7 @@ def provdal(request):
     elif model == "IVOA":
         serializer = VOProvenanceSerializer(prov)
     else:
-        # raise error: not supported
-        raise ValidationError(
-           'Invalid value: %(value)s is not supported',
-            code='invalid',
-            params={'value': model},
-        )
+        return HttpResponseBadRequest("Bad request: the value '%s' is not supported for parameter MODEL" % (model))
 
     data = serializer.data
 
@@ -567,3 +558,4 @@ def provdal(request):
         # 415 Unsupported media type
         provstr = "Sorry, unknown format %s was requested, cannot handle this." % format
         return HttpResponse(provstr, status=415, content_type='text/plain; charset=utf-8')
+

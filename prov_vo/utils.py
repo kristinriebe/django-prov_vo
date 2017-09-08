@@ -6,7 +6,7 @@ from .models import (
 import logging
 from django.http import QueryDict
 
-class InvalidData(Exception):
+class InvalidDataError(Exception):
     pass
 
 
@@ -51,7 +51,7 @@ class QueryDictDALI(QueryDict):
         if val == []:
             return default
         if len(list(val)) > 1:
-           raise InvalidData('Bad request: parameter %s must occur only once or not at all.' % key)
+           raise InvalidDataError('Bad request: parameter %s must occur only once or not at all.' % key)
         return val[0]
 
     def make_upper_case_parameter_names(self):
