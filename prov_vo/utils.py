@@ -38,7 +38,7 @@ class QueryDictDALI(QueryDict):
             if uppercase:
                 self.make_upper_case_parameter_names()
 
-    def getsingle(self, key, default=None):
+    def getsingle(self, key, default=None, removekey=False):
         """
         Return the data value for the passed key. If key doesn't exist
         or value is an empty list, return `default`.
@@ -52,6 +52,10 @@ class QueryDictDALI(QueryDict):
             return default
         if len(list(val)) > 1:
            raise InvalidDataError('Bad request: parameter %s must occur only once or not at all.' % key)
+
+        if removekey:
+            self.removekey(key)
+
         return val[0]
 
     def make_upper_case_parameter_names(self):
@@ -70,6 +74,13 @@ class QueryDictDALI(QueryDict):
                 self.pop(key)
 
 
+    def removekey(self, key):
+        try:
+            values = self.pop(key)
+            return values
+        except KeyError:
+            return None
+
 
 def track_entity(entity, prov, countdown, all_flag=False, direction='BACK', members_flag=False, steps_flag=False, agent_flag=False):
     if countdown == 0:
@@ -78,8 +89,7 @@ def track_entity(entity, prov, countdown, all_flag=False, direction='BACK', memb
     # Look for entity in all possible relations,
     # follow these relations further recursively.
 
-    # Follow at most countdown steps backward
-    # (might even be set in all_flag=True case).
+    # Follow at most countdown steps backward/forward
     countdown -= 1
 
     # First go through the 'short-cut' relation 'wasDerivedFrom'

@@ -297,7 +297,7 @@ def provdal_form(request):
                 compliance = form.cleaned_data['model']
 
                 return HttpResponseRedirect(
-                    reverse('prov_vo:provdal')+"?ID=%s&DEPTH=%s&DIRECTION=%s&MEMBERS=%s&STEPS=%s&AGENT=%s&FORMAT=%s&MODEL=%s" %
+                    reverse('prov_vo:provdal')+"?ID=%s&DEPTH=%s&DIRECTION=%s&MEMBERS=%s&STEPS=%s&AGENT=%s&RESPONSEFORMAT=%s&MODEL=%s" %
                     (str(obj_id), str(depth).upper(), str(direction).upper(), str(members).upper(),
                     str(steps).upper(), str(agent).upper(), str(format).upper(),
                     str(compliance).upper()))
@@ -330,18 +330,26 @@ def provdal(request):
     if 'ID' not in h:
         return HttpResponse('Bad request: the ID parameter is required.', status=400)
     id_list = h.getlist('ID')
+    h.removekey('ID')
+    depth = h.getsingle('DEPTH', default='1', removekey=True)
+    direction = h.getsingle('DIRECTION', default='BACK', removekey=True)
+    format = h.getsingle('RESPONSEFORMAT', removekey=True)  # set default after evaluating accept-header
 
-    depth = h.getsingle('DEPTH', default='1')
-    direction = h.getsingle('DIRECTION', default='BACK')
-    format = h.getsingle('FORMAT')  # set default after evaluating accept-header
+    # optional parameters
+    members = h.getsingle('MEMBERS', default='FALSE', removekey=True)  # True for tracking members of collections
+    steps = h.getsingle('STEPS', default='FALSE', removekey=True)   # True for tracking steps of activityFlows
+    agent = h.getsingle('AGENT', default='FALSE', removekey=True)   # True for tracking all relations to/from agents
 
-    # only in this implementation, not mentioned in standard
-    model = h.getsingle('MODEL', 'IVOA')  # one of IVOA, W3C (or None?)
+    # only in this implementation, not part of the standard
+    model = h.getsingle('MODEL', default='IVOA', removekey=True)  # one of IVOA, W3C (or None?)
 
-    # new optional parameters
-    members = h.getsingle('MEMBERS', 'FALSE')  # True for tracking members of collections
-    steps = h.getsingle('STEPS', 'FALSE')   # True for tracking steps of activityFlows
-    agent = h.getsingle('AGENT', 'FALSE')   # True for tracking all relations to/from agents
+    # if there are any more (unexpected) parameters, throw an error
+    if len(h.keys()) > 0:
+        params = ', '.join(p for p in h.keys())
+        if len(h.keys()) == 1:
+            return HttpResponseBadRequest('Bad request: parameter %s is not supported by this service.' % params)
+        else:
+            return HttpResponseBadRequest('Bad request: parameters %s are not supported by this service.' % params)
 
     if 'HTTP_ACCEPT' in request.META:
         http_accept = request.META['HTTP_ACCEPT']
@@ -439,11 +447,17 @@ def provdal(request):
     steps_flag = False
     agent_flag = False
 
-    if members.upper() == 'TRUE':
+    # TODO: improve the following lines, create a QueryDALI function for this
+    if members.upper() == 'TRUE' or members == '1':
         members_flag = True
-    if steps.upper() == 'TRUE':
+    elif members.upper() == 'FALSE' or members == '0':
+        members_flag = False
+    else:
+        return HttpResponseBadRequest("Bad request: the value '%s' is not supported for parameter DEPTH" % (depth))
+
+    if steps.upper() == 'TRUE' or members == '1':
         steps_flag = True
-    if agent.upper() == 'TRUE':
+    if agent.upper() == 'TRUE' or members == '1':
         agent_flag = True
 
     prefix = {

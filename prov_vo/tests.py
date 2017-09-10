@@ -139,47 +139,47 @@ class ProvDAL_Accept_TestCase(TestCase):
 
     def test_get_format_provn1(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&FORMAT=PROV-N', HTTP_ACCEPT="*/*")
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&RESPONSEFORMAT=PROV-N', HTTP_ACCEPT="*/*")
         self.assertEqual(response.status_code, 200)
 
     def test_get_format_provn2(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&FORMAT=PROV-N', HTTP_ACCEPT="text/*")
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&RESPONSEFORMAT=PROV-N', HTTP_ACCEPT="text/*")
         self.assertEqual(response.status_code, 200)
 
     def test_get_format_provn3(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&FORMAT=PROV-N', HTTP_ACCEPT="text/plain")
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&RESPONSEFORMAT=PROV-N', HTTP_ACCEPT="text/plain")
         self.assertEqual(response.status_code, 200)
 
     def test_get_format_provn_wrongaccept(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&FORMAT=PROV-N', HTTP_ACCEPT="application/json")
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&RESPONSEFORMAT=PROV-N', HTTP_ACCEPT="application/json")
         self.assertEqual(response.status_code, 406)
 
     def test_get_format_provjson1(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&FORMAT=PROV-JSON', HTTP_ACCEPT="*/*")
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&RESPONSEFORMAT=PROV-JSON', HTTP_ACCEPT="*/*")
         self.assertEqual(response.status_code, 200)
 
     def test_get_format_provjson2(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&FORMAT=PROV-JSON', HTTP_ACCEPT="application/*")
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&RESPONSEFORMAT=PROV-JSON', HTTP_ACCEPT="application/*")
         self.assertEqual(response.status_code, 200)
 
     def test_get_format_provjson3(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&FORMAT=PROV-JSON', HTTP_ACCEPT="application/json")
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&RESPONSEFORMAT=PROV-JSON', HTTP_ACCEPT="application/json")
         self.assertEqual(response.status_code, 200)
 
     def test_get_format_provjson_wrongaccept(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&FORMAT=PROV-JSON', HTTP_ACCEPT="application/xml")
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&RESPONSEFORMAT=PROV-JSON', HTTP_ACCEPT="application/xml")
         self.assertEqual(response.status_code, 406)
 
     def test_get_format_unsupported(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&FORMAT=HUBBA')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&RESPONSEFORMAT=HUBBA')
         self.assertEqual(response.status_code, 415)
 
     def test_get_format_unsupportedaccept(self):
@@ -228,7 +228,7 @@ class ProvDAL_General_TestCase(TestCase):
 
     def test_getProvdalNothingFound(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=blabla&FORMAT=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=blabla&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         found = re.findall(r"^act.*", response.content, flags=re.MULTILINE)
         numlines = len(found)
@@ -236,7 +236,7 @@ class ProvDAL_General_TestCase(TestCase):
 
     def test_get_caseinsensitive(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?id=rave:obs&forMAt=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?id=rave:obs&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         content = get_content(response)
         expected = \
@@ -246,7 +246,7 @@ class ProvDAL_General_TestCase(TestCase):
 
     def test_get_caseinsensitive_multi(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?id=rave:obs&ID=rave:dr4&FORMAT=PROV-N&DEPTH=0')
+        response = client.get(reverse('prov_vo:provdal')+'?id=rave:obs&ID=rave:dr4&RESPONSEFORMAT=PROV-N&DEPTH=0')
         self.assertEqual(response.status_code, 200)
         content = get_content(response)
         expected = \
@@ -264,9 +264,25 @@ entity(rave:obs, [voprov:name="RAVE observations"])
             expected = "Bad request: parameter %s must occur only once or not at all." % (param)
         self.assertEqual(content, expected)
 
+    def test_get_unsupportedparameter(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&SOMETHING=nothing')
+        self.assertEqual(response.status_code, 400)
+        content = response.content
+        expected = "Bad request: parameter SOMETHING is not supported by this service."
+        self.assertEqual(content, expected)
+
+    def test_get_unsupportedparameters(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&SOMETHING=nothing&ANYTHING=null')
+        self.assertEqual(response.status_code, 400)
+        content = response.content
+        expected = "Bad request: parameters ANYTHING, SOMETHING are not supported by this service."
+        self.assertEqual(content, expected)
+
     def test_getProvdalActivityID(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:act&DEPTH=0&FORMAT=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:act&DEPTH=0&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         content = get_content(response)
         expected = """activity(rave:act, -, -, [voprov:name="myactivity"])\n"""
@@ -274,7 +290,7 @@ entity(rave:obs, [voprov:name="RAVE observations"])
 
     def test_getProvdalEntityID(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=0&FORMAT=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=0&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         content = get_content(response)
         expected = """entity(rave:dr4, [voprov:name="RAVE DR4"])\n"""
@@ -282,7 +298,7 @@ entity(rave:obs, [voprov:name="RAVE observations"])
 
     def test_getProvdalAgentID(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=org:rave&DEPTH=1&FORMAT=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=org:rave&DEPTH=1&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         # only the agent itself should be returned
         content = get_content(response)
@@ -291,7 +307,7 @@ entity(rave:obs, [voprov:name="RAVE observations"])
 
     def test_getProvdalEntityIDMultiple(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&ID=rave:obs&DEPTH=0&FORMAT=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&ID=rave:obs&DEPTH=0&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         content = get_content(response)
         expected = """entity(rave:dr4, [voprov:name="RAVE DR4"])
@@ -301,7 +317,7 @@ entity(rave:obs, [voprov:name="RAVE observations"])
 
     def test_getProvdalMixedIDs(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&ID=rave:act&ID=org:rave&DEPTH=0&FORMAT=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&ID=rave:act&ID=org:rave&DEPTH=0&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         content = get_content(response)
         expected = """\
@@ -313,16 +329,15 @@ agent(org:rave, [voprov:name="RAVE project"])
 
     def test_getProvdalActivityFlow(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow&FORMAT=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
-
         expected = 'activityFlow(rave:flow, -, -, [voprov:name="myflow"])'
         found = re.search(r"^act.*", response.content, flags=re.MULTILINE)
         self.assertEqual(found.group(0), expected)
 
     def test_getProvdalActivityFlowDepth2(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow'+'&DEPTH=2&FORMAT=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow'+'&DEPTH=2&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         found = re.findall(r"^act.*", response.content, flags=re.MULTILINE)
         self.assertEqual(len(found), 1)
@@ -331,14 +346,14 @@ agent(org:rave, [voprov:name="RAVE project"])
         # If STEPS=TRUE, substeps of the activityFlow shall be followed,
         # thus both, activityFlow and activity must be returned
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow'+'&DEPTH=2'+'&STEPS=TRUE&FORMAT=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow'+'&DEPTH=2'+'&STEPS=TRUE&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         found = re.findall(r"^act.*", response.content, flags=re.MULTILINE)
         self.assertEqual(len(found), 2)
 
     def test_getProvdalActivityDepth2(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:act'+'&DEPTH=2&FORMAT=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:act'+'&DEPTH=2&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         found = re.findall(r"^act.*", response.content, flags=re.MULTILINE)
         self.assertEqual(len(found), 2)
@@ -347,7 +362,7 @@ agent(org:rave, [voprov:name="RAVE project"])
     # followed beyond the agent if AGENT option is set to TRUE
     def test_getProvdalAgentFollow(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=org:rave&AGENT=TRUE&DEPTH=1&FORMAT=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=org:rave&AGENT=TRUE&DEPTH=1&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         # agent, activity, entity, wat and was. relation should be returned
         # strip begin/end document and prefix from response content:
@@ -363,7 +378,7 @@ wasAttributedTo(rave:dr4, org:rave)
 
     def test_getProvdalBack(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:act&DEPTH=1&FORMAT=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:act&DEPTH=1&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         content = re.sub(r'document.*\n', '', response.content)
         content = re.sub(r'endDocument', '', content)
@@ -381,7 +396,7 @@ hadStep(rave:flow, rave:act)
 
     def test_getProvdalForth(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:act&DEPTH=1&DIRECTION=FORTH&FORMAT=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:act&DEPTH=1&DIRECTION=FORTH&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         content = re.sub(r'document.*\n', '', response.content)
         content = re.sub(r'endDocument', '', content)
@@ -411,7 +426,7 @@ class ProvDAL_Derivation_TestCase(TestCase):
 
     def test_getProvdalBackDerivation(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=1&FORMAT=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=1&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         content = get_content(response)
         expected = \
@@ -423,7 +438,7 @@ wasDerivedFrom(rave:dr4, rave:obs, -, -, -)
 
     def test_getProvdalForthDerivation(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:obs&DEPTH=1&DIRECTION=FORTH&FORMAT=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:obs&DEPTH=1&DIRECTION=FORTH&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         content = get_content(response)
         expected = \
@@ -447,7 +462,7 @@ class ProvDAL_Information_TestCase(TestCase):
 
     def test_getProvdalBackInformation(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:act2&DEPTH=1&FORMAT=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:act2&DEPTH=1&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         content = get_content(response)
         expected = \
@@ -459,7 +474,7 @@ wasInformedBy(ex:act2, ex:act1)
 
     def test_getProvdalForthInformation(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:act1&DEPTH=1&DIRECTION=FORTH&FORMAT=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:act1&DEPTH=1&DIRECTION=FORTH&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         content = re.sub(r'document.*\n', '', response.content)
         content = re.sub(r'endDocument', '', content)

@@ -37,7 +37,7 @@ class ProvDalForm(forms.Form):
     )
 
     format = forms.ChoiceField(
-        label="Format",
+        label="Response format",
         choices=[('PROV-N', 'PROV-N'), ('PROV-JSON','PROV-JSON'), ('GRAPH', 'Graphics')],
         widget=forms.RadioSelect(),
         help_text="Format of returned provenance record",

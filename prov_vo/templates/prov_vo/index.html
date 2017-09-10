@@ -12,10 +12,13 @@
 The ProvDAL endpoint is located at <a href="{% url 'prov_vo:provdal' %}">{% url 'prov_vo:provdal' %}</a>. It takes following possible request parameters:
 <ul>
     <li>ID: a valid identifier for an entity or activity</li>
-    <li>BACKWARD: integer for the number of steps to track provenance history or <code>ALL</code> for everything</li>
-    <li>FORWARD: integer for the number of steps to track relations forward (in time) or <code>ALL</code> for everything</li>
+    <li>DEPTH: integer for the number of steps to track provenance history or <code>ALL</code> for everything</li>
+    <li>DIRECTION: the direction in which to track processing steps/data flow, either <code>BACK</code> (default) or <code>FORTH</code></li>
     <li>MODEL: <code>IVOA</code> for compliance with IVOA ProvenanceDM or <code>W3C</code> for compliance with W3C ProvDM</li>
-    <li>FORMAT: only <code>PROV-JSON</code> and <code>PROV-N</code> are possible for now, in addition: <code>Graphics</code></li>
+    <li>RESPONSEFORMAT: only <code>PROV-JSON</code> and <code>PROV-N</code> are possible for now, in addition: <code>Graphics</code></li>
+    <li>MEMBERS: set to <code>true</code> if hadMember relations of collections shall be tracked as well, default is <code>false</code></li>
+    <li>STEPS: set to <code>true</code> if hadStep relations of activityFlows shall be tracked as well <code>false</code></li>
+    <li>AGENT: set to <code>true</code> if relations from an agent to other activities and entities shall be tracked as well, default is <code>false</code></li>
 </ul>
 There is also a <a href="{% url 'prov_vo:provdal_form' %}">ProvDAL Form</a> which you can fill out and submit, so it will create and send the appropriate request for you.
 
