@@ -336,9 +336,9 @@ def provdal(request):
     format = h.getsingle('RESPONSEFORMAT', default='PROV-JSON', removekey=True)  # set default after evaluating accept-header
 
     # optional parameters
-    members = h.getsingle('MEMBERS', default='FALSE', removekey=True)  # True for tracking members of collections
-    steps = h.getsingle('STEPS', default='FALSE', removekey=True)   # True for tracking steps of activityFlows
-    agent = h.getsingle('AGENT', default='FALSE', removekey=True)   # True for tracking all relations to/from agents
+    members_flag = h.getsingle('MEMBERS', default='FALSE', removekey=True)  # True for tracking members of collections
+    steps_flag = h.getsingle('STEPS', default='FALSE', removekey=True)   # True for tracking steps of activityFlows
+    agent_flag = h.getsingle('AGENT', default='FALSE', removekey=True)   # True for tracking all relations to/from agents
 
     # only in this implementation, not part of the standard
     model = h.getsingle('MODEL', default='IVOA', removekey=True)  # one of IVOA, W3C (or None?)
@@ -359,7 +359,6 @@ def provdal(request):
     if errcode is not None:
         return HttpResponse(errmsg, status=errcode, content_type='text/plain; charset=utf-8')
 
-
     if format == 'GRAPH':
         ids = ''
         for i in id_list:
@@ -369,37 +368,21 @@ def provdal(request):
 
     # check flags
     countdown = -1
-    all_flag = False
     if str(depth).upper() == "ALL":
         # will search for all further provenance, recursively
         countdown = -1
-        all_flag = True
     elif depth.isdigit():
         # follow at most this number of relations along provenance history
         countdown = int(depth)
-        all_flag = False
     else:
         # raise error: not supported
         return HttpResponseBadRequest("Bad request: the value '%s' is not supported for parameter DEPTH" % (depth))
 
 
     # check optional parameter values
-    members_flag = False
-    steps_flag = False
-    agent_flag = False
-
-    # TODO: improve the following lines, create a QueryDALI function for this
-    if members.upper() == 'TRUE' or members == '1':
-        members_flag = True
-    elif members.upper() == 'FALSE' or members == '0':
-        members_flag = False
-    else:
-        return HttpResponseBadRequest("Bad request: the value '%s' is not supported for parameter DEPTH" % (depth))
-
-    if steps.upper() == 'TRUE' or steps == '1':
-        steps_flag = True
-    if agent.upper() == 'TRUE' or agent == '1':
-        agent_flag = True
+    members_flag = set_true_false('MEMBERS', members_flag)
+    steps_flag = set_true_false('STEPS', steps_flag)
+    agent_flag = set_true_false('AGENT', agent_flag)
 
     prefix = {
         "voprov": "http://www.ivoa.net/documents/ProvenanceDM/voprov/",
@@ -440,16 +423,15 @@ def provdal(request):
             # store current entity in dict and search for provenance:
             prov['entity'][entity.id] = entity
             prov = utils.track_entity(entity, prov, countdown,
-                all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
                 agent_flag=agent_flag)
-
         except Entity.DoesNotExist:
             pass
             # do not return, just continue with other ids
             # (and if none of them exists, return empty provenance record)
+
 
         try:
             activity = Activity.objects.get(id=obj_id)
@@ -458,20 +440,17 @@ def provdal(request):
 
             prov[activity_type][activity.id] = activity
             prov = utils.track_activity(activity, prov, countdown,
-                all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
                 agent_flag=agent_flag)
         except Activity.DoesNotExist:
             pass
-
         try:
             agent = Agent.objects.get(id=obj_id)
             prov['agent'][agent.id] = agent
             if agent_flag:
                 prov = utils.track_agent(agent, prov, countdown,
-                    all_flag=all_flag,
                     direction=direction,
                     members_flag=members_flag,
                     steps_flag=steps_flag,
@@ -521,7 +500,12 @@ def check_accept_header_reponseformat(request, format):
     else:
         http_accept = "*/*"
 
-    if http_accept not in "application/json text/plain application/* text/* */*":
+
+    if ("application/json" not in http_accept
+        and "text/plain" not in http_accept
+        and "application/*" not in http_accept
+        and "text/*" not in http_accept
+        and "*/*" not in http_accept):
         # 415 Unsupported media type
         responsestr = "Sorry, media type '%s' was requested, but is not supported by this service." % http_accept
         return 415, responsestr
@@ -567,3 +551,18 @@ def check_accept_header_reponseformat(request, format):
         return 406, responsestr
 
     return None, None
+
+
+def set_true_false(key, value):
+    """
+    Set the value for given key to True or False, depending on its value.
+    Return error, if neither true nor false or equivalent are given.
+    """
+
+    if value.upper() == 'TRUE' or value == '1':
+        value = True
+    elif value.upper() == 'FALSE' or value == '0':
+        value = False
+    else:
+        raise InvalidDataError("Bad request: the value '%s' is not supported for parameter %s" % (value, key))
+    return value

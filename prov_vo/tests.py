@@ -337,7 +337,7 @@ agent(org:rave, [voprov:name="RAVE project"])
 
     def test_getProvdalActivityFlowDepth2(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow'+'&DEPTH=2&RESPONSEFORMAT=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow&DEPTH=2&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         found = re.findall(r"^act.*", response.content, flags=re.MULTILINE)
         self.assertEqual(len(found), 1)
@@ -346,14 +346,14 @@ agent(org:rave, [voprov:name="RAVE project"])
         # If STEPS=TRUE, substeps of the activityFlow shall be followed,
         # thus both, activityFlow and activity must be returned
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow'+'&DEPTH=2'+'&STEPS=TRUE&RESPONSEFORMAT=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow&DEPTH=3&STEPS=true&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         found = re.findall(r"^act.*", response.content, flags=re.MULTILINE)
         self.assertEqual(len(found), 2)
 
     def test_getProvdalActivityDepth2(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:act'+'&DEPTH=2&RESPONSEFORMAT=PROV-N')
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:act&DEPTH=2&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
         found = re.findall(r"^act.*", response.content, flags=re.MULTILINE)
         self.assertEqual(len(found), 2)

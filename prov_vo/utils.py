@@ -58,6 +58,7 @@ class QueryDictDALI(QueryDict):
 
         return val[0]
 
+
     def make_upper_case_parameter_names(self):
         for key in self.keys():
 
@@ -82,7 +83,8 @@ class QueryDictDALI(QueryDict):
             return None
 
 
-def track_entity(entity, prov, countdown, all_flag=False, direction='BACK', members_flag=False, steps_flag=False, agent_flag=False):
+
+def track_entity(entity, prov, countdown, direction='BACK', members_flag=False, steps_flag=False, agent_flag=False):
     if countdown == 0:
         return prov
 
@@ -118,7 +120,6 @@ def track_entity(entity, prov, countdown, all_flag=False, direction='BACK', memb
 
             # continue with pre-decessor
             prov = track_entity(nextnode, prov, countdown,
-                all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
@@ -144,7 +145,6 @@ def track_entity(entity, prov, countdown, all_flag=False, direction='BACK', memb
 
                 # follow activity further (but only, if not visited before)
                 prov = track_activity(wg.activity, prov, countdown,
-                    all_flag=all_flag,
                     direction=direction,
                     members_flag=members_flag,
                     steps_flag=steps_flag,
@@ -175,7 +175,6 @@ def track_entity(entity, prov, countdown, all_flag=False, direction='BACK', memb
 
                 # follow this activity's provenance (always)
                 prov = track_activity(u.activity, prov, countdown,
-                    all_flag=all_flag,
                     direction=direction,
                     members_flag=members_flag,
                     steps_flag=steps_flag,
@@ -198,7 +197,6 @@ def track_entity(entity, prov, countdown, all_flag=False, direction='BACK', memb
 
             # follow further
             prov = track_entity(h.collection, prov, countdown,
-                all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
@@ -220,7 +218,6 @@ def track_entity(entity, prov, countdown, all_flag=False, direction='BACK', memb
 
                 # follow further
                 prov = track_entity(h.entity, prov, countdown,
-                    all_flag=all_flag,
                     direction=direction,
                     members_flag=members_flag,
                     steps_flag=steps_flag,
@@ -243,7 +240,6 @@ def track_entity(entity, prov, countdown, all_flag=False, direction='BACK', memb
         # do not follow agent further, unless flag is set
         if agent_flag:
             prov = track_agent(wa.agent, prov, countdown,
-                all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
@@ -254,7 +250,7 @@ def track_entity(entity, prov, countdown, all_flag=False, direction='BACK', memb
     return prov
 
 
-def track_activity(activity, prov, countdown, all_flag=False, direction='BACK', members_flag=False, steps_flag=False, agent_flag=False):
+def track_activity(activity, prov, countdown, direction='BACK', members_flag=False, steps_flag=False, agent_flag=False):
     if countdown == 0:
         return prov
 
@@ -289,7 +285,6 @@ def track_activity(activity, prov, countdown, all_flag=False, direction='BACK', 
 
             # follow provenance along this activity(flow)
             prov = track_activity(nextnode, prov, countdown,
-                all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
@@ -309,7 +304,6 @@ def track_activity(activity, prov, countdown, all_flag=False, direction='BACK', 
 
                 # follow this entity's provenance (always)
                 prov = track_entity(u.entity, prov, countdown,
-                    all_flag=all_flag,
                     direction=direction,
                     members_flag=members_flag,
                     steps_flag=steps_flag,
@@ -332,7 +326,6 @@ def track_activity(activity, prov, countdown, all_flag=False, direction='BACK', 
 
                 # follow activity further (but only, if not visited before)
                 prov = track_entity(wg.entity, prov, countdown,
-                    all_flag=all_flag,
                     direction=direction,
                     members_flag=members_flag,
                     steps_flag=steps_flag,
@@ -355,7 +348,6 @@ def track_activity(activity, prov, countdown, all_flag=False, direction='BACK', 
         # do not follow agent further, unless flag is set
         if agent_flag:
             prov = track_agent(wa.agent, prov, countdown,
-                all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
@@ -375,7 +367,6 @@ def track_activity(activity, prov, countdown, all_flag=False, direction='BACK', 
 
             # follow provenance along this activity(flow)
             prov = track_activity(h.activityFlow, prov, countdown,
-                all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
@@ -397,7 +388,6 @@ def track_activity(activity, prov, countdown, all_flag=False, direction='BACK', 
 
                 # follow provenance along this activity(flow)
                 prov = track_activity(h.activity, prov, countdown,
-                    all_flag=all_flag,
                     direction=direction,
                     members_flag=members_flag,
                     steps_flag=steps_flag,
@@ -418,7 +408,7 @@ def get_activity_type(activity_id):
     return activity_type
 
 
-def track_agent(agent, prov, countdown, all_flag=False, direction='BACK', members_flag=False, steps_flag=False, agent_flag=False):
+def track_agent(agent, prov, countdown, direction='BACK', members_flag=False, steps_flag=False, agent_flag=False):
     if countdown == 0:
         return prov
 
@@ -441,7 +431,6 @@ def track_agent(agent, prov, countdown, all_flag=False, direction='BACK', member
 
             # follow provenance along this activity(flow)
             prov = track_activity(wa.activity, prov, countdown,
-                all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
@@ -460,7 +449,6 @@ def track_agent(agent, prov, countdown, all_flag=False, direction='BACK', member
 
             # follow further
             prov = track_entity(wa.entity, prov, countdown,
-                all_flag=all_flag,
                 direction=direction,
                 members_flag=members_flag,
                 steps_flag=steps_flag,
