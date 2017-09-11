@@ -174,7 +174,7 @@ class ProvDAL_Accept_TestCase(TestCase):
 
     def test_get_format_provjson_wrongaccept(self):
         client = Client()
-        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&RESPONSEFORMAT=PROV-JSON', HTTP_ACCEPT="application/xml")
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent&RESPONSEFORMAT=PROV-JSON', HTTP_ACCEPT="text/plain")
         self.assertEqual(response.status_code, 406)
 
     def test_get_format_unsupported(self):

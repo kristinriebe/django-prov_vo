@@ -333,7 +333,7 @@ def provdal(request):
     h.removekey('ID')
     depth = h.getsingle('DEPTH', default='1', removekey=True)
     direction = h.getsingle('DIRECTION', default='BACK', removekey=True)
-    format = h.getsingle('RESPONSEFORMAT', removekey=True)  # set default after evaluating accept-header
+    format = h.getsingle('RESPONSEFORMAT', default='PROV-JSON', removekey=True)  # set default after evaluating accept-header
 
     # optional parameters
     members = h.getsingle('MEMBERS', default='FALSE', removekey=True)  # True for tracking members of collections
@@ -351,72 +351,13 @@ def provdal(request):
         else:
             return HttpResponseBadRequest('Bad request: parameters %s are not supported by this service.' % params)
 
-    if 'HTTP_ACCEPT' in request.META:
-        http_accept = request.META['HTTP_ACCEPT']
-    else:
-        http_accept = "*/*"
-    #if '*/*' in request.content_type:
-    #    if format is None:
-            # set a default:
-    #        format = 'PROV-N'
-    if format is None:
-        # take format based on accept header
-        if 'application/json' in http_accept:
-            format = 'PROV-JSON'
-        elif 'text/plain' in http_accept:
-            format = 'PROV-N'
-        # set some defaults:
-        elif 'application/*' in http_accept:
-            format = 'PROV-JSON'
-        elif 'text/*' in http_accept:
-            format = 'PROV-N'
-        elif '*/*' in http_accept:
-            # set a default format here:
-            format = 'PROV-JSON'
-        else:
-            # 415 Unsupported media type
-            responsestr = "Sorry, media type '%s' was requested, but is not supported by this service." % http_accept
-            return HttpResponse(responsestr, status=415, content_type='text/plain; charset=utf-8')
 
-    if format not in "PROV-N PROV-JSON GRAPH GRAPH-JSON":
-        # 415 Unsupported media type
-        responsestr = "Sorry, format '%s' was requested, but is not supported by this service." % format
-        return HttpResponse(responsestr, status=415, content_type='text/plain; charset=utf-8')
-
-    # check for format and accept header compatibility
-    if (format == 'PROV-N' and (
-            http_accept.find('text/*') >= 0
-            or http_accept.find("text/plain") >= 0
-            or http_accept.find("*/*") >= 0)
-        ):
-        #print 'use PROV-N'
-        pass
-    elif (format == 'PROV-JSON' and (\
-            http_accept.find('application/*') >= 0\
-            or http_accept.find('application/json') >= 0\
-            or http_accept.find('*/*') >= 0)\
-        ):
-        #print 'use PROV-JSON'
-        pass
-    elif (format == 'GRAPH' and (\
-            http_accept.find('text/*') >= 0
-            or http_accept.find("text/html") >= 0
-            or http_accept.find("*/*") >= 0)
-        ):
-        #print 'use GRAPH'
-        pass
-    elif (format == 'GRAPH-JSON' and (\
-            http_accept.find('text/*') >= 0
-            or http_accept.find("text/html") >= 0
-            or http_accept.find("*/*") >= 0)
-        ):
-        #print 'use GRAPH'
-        pass
-    else:
-        #print "Need to complain"
-        # return 406 Not Acceptable
-        responsestr = "Sorry, format %s and media type %s were requested, but are not compatible." % (format, http_accept)
-        return HttpResponse(responsestr, status=406, content_type='text/plain; charset=utf-8')
+    # check accept header and compare with RESPONSEFORMAT; if incompatible, then throw an error
+    # default format is PROV-JSON (see standard specification, thus even if the RESPONSEFORMAT
+    # is None, the http-accept must be compatible to the default format)
+    errcode, errmsg = check_accept_header_reponseformat(request, format)
+    if errcode is not None:
+        return HttpResponse(errmsg, status=errcode, content_type='text/plain; charset=utf-8')
 
 
     if format == 'GRAPH':
@@ -455,9 +396,9 @@ def provdal(request):
     else:
         return HttpResponseBadRequest("Bad request: the value '%s' is not supported for parameter DEPTH" % (depth))
 
-    if steps.upper() == 'TRUE' or members == '1':
+    if steps.upper() == 'TRUE' or steps == '1':
         steps_flag = True
-    if agent.upper() == 'TRUE' or members == '1':
+    if agent.upper() == 'TRUE' or agent == '1':
         agent_flag = True
 
     prefix = {
@@ -557,7 +498,6 @@ def provdal(request):
         return HttpResponse(provstr, content_type='text/plain; charset=utf-8')
 
     elif format == 'PROV-JSON':
-
         json_str = PROVJSONRenderer().render(data)
         return HttpResponse(json_str, content_type='application/json; charset=utf-8')
 
@@ -573,3 +513,57 @@ def provdal(request):
         provstr = "Sorry, unknown format %s was requested, cannot handle this." % format
         return HttpResponse(provstr, status=415, content_type='text/plain; charset=utf-8')
 
+
+def check_accept_header_reponseformat(request, format):
+
+    if 'HTTP_ACCEPT' in request.META:
+        http_accept = request.META['HTTP_ACCEPT']
+    else:
+        http_accept = "*/*"
+
+    if http_accept not in "application/json text/plain application/* text/* */*":
+        # 415 Unsupported media type
+        responsestr = "Sorry, media type '%s' was requested, but is not supported by this service." % http_accept
+        return 415, responsestr
+
+    if format not in "PROV-N PROV-JSON GRAPH GRAPH-JSON":
+        # 415 Unsupported media type
+        responsestr = "Sorry, format '%s' was requested, but is not supported by this service." % format
+        return 415, responsestr
+
+    # check for format and accept header compatibility
+    if (format == 'PROV-N' and (
+            http_accept.find('text/*') >= 0
+            or http_accept.find("text/plain") >= 0
+            or http_accept.find("*/*") >= 0)
+        ):
+        #print 'use PROV-N'
+        pass
+    elif (format == 'PROV-JSON' and (\
+            http_accept.find('application/*') >= 0\
+            or http_accept.find('application/json') >= 0\
+            or http_accept.find('*/*') >= 0)\
+        ):
+        #print 'use PROV-JSON'
+        pass
+    elif (format == 'GRAPH' and (\
+            http_accept.find('text/*') >= 0
+            or http_accept.find("text/html") >= 0
+            or http_accept.find("*/*") >= 0)
+        ):
+        #print 'use GRAPH'
+        pass
+    elif (format == 'GRAPH-JSON' and (\
+            http_accept.find('text/*') >= 0
+            or http_accept.find("text/html") >= 0
+            or http_accept.find("*/*") >= 0)
+        ):
+        #print 'use GRAPH'
+        pass
+    else:
+        #print "Need to complain"
+        # return 406 Not Acceptable
+        responsestr = "Sorry, format %s and media type %s were requested, but are not compatible." % (format, http_accept)
+        return 406, responsestr
+
+    return None, None
