@@ -2,6 +2,16 @@
 Django prov_vo package
 ======================
 
+**A prototype implementation of the IVOA Provenance Data Model**
+
+.. image:: https://travis-ci.org/kristinriebe/django-prov_vo.svg?branch=master
+   :alt: Build Status
+   :target: https://travis-ci.org/kristinriebe/django-prov_vo
+
+.. image:: https://coveralls.io/repos/github/kristinriebe/django-prov_vo/badge.svg?branch=master
+   :alt: Coverage Status
+   :target: https://coveralls.io/github/kristinriebe/django-prov_vo?branch=master
+
 This package provides a resuable django application which is intended to be used within a Django project, see e.g. https://github.com/kristinriebe/provenance-rave/. It provides an implementation of the
 IVOA Provenance Data Model (http://www.ivoa.net/documents/ProvenancDM/), with a REST API and a ProvDAL interface to retrieve the stored provenance metadata.
 
