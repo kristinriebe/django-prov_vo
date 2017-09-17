@@ -1,0 +1,5 @@
+django>=1.9
+django-braces
+djangorestframework
+pytz
+lxml

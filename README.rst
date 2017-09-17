@@ -2,11 +2,8 @@
 Django prov_vo package
 ======================
 
-This package is intended to be used with a Django web application, see e.g. github.com/kristinriebe/provenance-rave/. It is an implementation of the
-IVOA Provenance Data Model: the data model classes
-are implemented as Django models, a provenance data layer access
-(ProvDAL) interface is also included.
-Thus, provenance metadata can be stored and served in an VO-compatible way.
+This package provides a resuable django application which is intended to be used within a Django project, see e.g. https://github.com/kristinriebe/provenance-rave/. It provides an implementation of the
+IVOA Provenance Data Model (http://www.ivoa.net/documents/ProvenancDM/), with a REST API and a ProvDAL interface to retrieve the stored provenance metadata.
 
 
 Installation
@@ -26,13 +23,13 @@ Installation
     cd ..
     cd <my_web_app>
 
-  An example for a web application using this package is available at https://github.com/kristinriebe/provenance-rave
+  An example for a django project using this package is available at https://github.com/kristinriebe/provenance-rave
 
 * Install the prov_vo app (e.g. inside your virtual environment) using pip::
 
     pip install ../django-prov_vo/dist/django-prov_vo-0.1.tar.gz
 
-  Alternatively, you can also add the following lines in your webapp's :code:`settings.py`::
+  Alternatively, you can also add the following lines in your projects's :code:`settings.py`::
 
     import sys
     sys.path.append('../django-prov_vo/')
@@ -49,6 +46,14 @@ Installation
 
     url(r'^prov_vo/', include('prov_vo.urls')),
 
+* Install the requirements of this application, e.g. in a virtual environment::
+
+    virtualenv -p /usr/bin/python2.7 env
+    source env/bin/activate
+
+    cd django-prov_vo
+    pip install -r requirements.txt
+
 * Run :code:`python manage.py migrate` to update the database and create the provenance models.
 
 * Start the development server and open a browser with http://127.0.0.1:8000/prov_vo/. You should see now a page with some introductory words and links to forms, activity lists etc.
@@ -56,11 +61,26 @@ Installation
 Have fun! :-)
 
 
+Testing
+-----------
+
+* This django application can be tested standalone, outside the project. First create a virtual environment and install the required python (2.7) packages::
+
+    virtualenv -p /usr/bin/python2.7 env
+    source env/bin/activate
+
+    pip install -r requirements.txt
+
+* Now switch to prov_vo and run::
+
+    cd prov_vo
+    python runtests.py
+
+* This runs all the tests stored in :code:`tests`.
+
+
 TODO
 ----
-
-* Fully implement new ProvDAL suggestions, along with optional extensions,
- + implement a version that is closer to what the users need
 
 * Fix REST API: create new activities etc. (datetime format problem), allow data update (PUT)
 

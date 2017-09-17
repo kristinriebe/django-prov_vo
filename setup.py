@@ -13,7 +13,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     license='Apache2 License',  # example license
-    description='A webapp using the IVOA Provenance Data Model',
+    description='A webapp implementing the IVOA Provenance Data Model',
     long_description=README,
     url='',
     author='Kristin Riebe',
