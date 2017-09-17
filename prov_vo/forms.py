@@ -72,8 +72,9 @@ class ProvDalForm(forms.Form):
 
     # if there are additional form settings defined in settings,
     # overwrite/add corresponding options:
-    if settings.PROV_VO_CONFIG['provdalform']:
+    try:
         formsettings = settings.PROV_VO_CONFIG['provdalform']
-
         if 'obj_id.help_text' in formsettings:
             obj_id.help_text = formsettings['obj_id.help_text']
+    except AttributeError, e:
+        pass

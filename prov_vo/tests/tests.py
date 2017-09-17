@@ -9,9 +9,10 @@ from django.test import TestCase
 from django.test import Client
 from django.test.utils import setup_test_environment
 
-from .models import Activity, ActivityFlow, HadStep
-from .models import Entity, WasGeneratedBy, Used, WasDerivedFrom, WasInformedBy, HadMember
-from .models import Agent, WasAssociatedWith, WasAttributedTo
+from prov_vo.models import Activity, ActivityFlow, HadStep
+from prov_vo.models import Entity, WasGeneratedBy, Used, WasDerivedFrom, WasInformedBy, HadMember
+from prov_vo.models import Agent, WasAssociatedWith, WasAttributedTo
+#from prov_vo.urls import *
 
 # Run all tests:
 #   python manage.py test prov_vo

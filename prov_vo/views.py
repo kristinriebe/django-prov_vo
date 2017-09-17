@@ -138,9 +138,11 @@ def allprov(request, format):
     }
 
     # add prefixes from settings:
-    if settings.PROV_VO_CONFIG.namespaces:
+    try:
         for key, value in settings.PROV_VO_CONFIG.namespaces.items():
             prefix[key] = value
+    except AttributeError, e:
+        pass
 
 
     prov = {
@@ -393,9 +395,11 @@ def provdal(request):
     }
 
     # add (project specific) prefixes from (global) settings:
-    if settings.PROV_VO_CONFIG['namespaces']:
+    try:
         for key, value in settings.PROV_VO_CONFIG['namespaces'].items():
             prefix[key] = value
+    except AttributeError, e:
+        pass
 
     prov = {
         'prefix': prefix,
