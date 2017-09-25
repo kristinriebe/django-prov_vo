@@ -13,7 +13,7 @@ Django prov_vo package
    :target: https://coveralls.io/github/kristinriebe/django-prov_vo?branch=master
 
 This package provides a resuable django application which is intended to be used within a Django project, see e.g. https://github.com/kristinriebe/provenance-rave/. It provides an implementation of the
-IVOA Provenance Data Model (http://www.ivoa.net/documents/ProvenancDM/), with a REST API and a ProvDAL interface to retrieve the stored provenance metadata.
+IVOA Provenance Data Model (see http://www.ivoa.net/documents/ProvenanceDM/ for the latest version), with a REST API and a ProvDAL interface to retrieve the stored provenance metadata.
 
 
 Installation
@@ -105,4 +105,4 @@ TODO
 * Implement xml serialization, votable serialization, for REST api and for Prov-DAL endoint
 * Implement "description" classes, i.e. ActivityDescription etc. (if needed)
 * Find a better way to visualize activityFlow, collection, detail/basic etc.
-
+* Add VOSI interface, for ProvDAL
