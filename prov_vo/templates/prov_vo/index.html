@@ -20,7 +20,15 @@ The ProvDAL endpoint is located at <a href="{% url 'prov_vo:provdal' %}">{% url 
     <li>STEPS: set to <code>true</code> if hadStep relations of activityFlows shall be tracked as well <code>false</code></li>
     <li>AGENT: set to <code>true</code> if relations from an agent to other activities and entities shall be tracked as well, default is <code>false</code></li>
 </ul>
+
 There is also a <a href="{% url 'prov_vo:provdal_form' %}">ProvDAL Form</a> which you can fill out and submit, so it will create and send the appropriate request for you.
+
+The corresponding VOSI resources for ProvDAL are:
+<ul>
+    <li><a href="{% url 'prov_vo:vosi_availability' %}">{% url 'prov_vo:vosi_availability' %}</a></li>
+    <li><a href="{% url 'prov_vo:vosi_capabilities' %}">{% url 'prov_vo:vosi_capabilities' %}</a></li>
+</ul>
+
 
 <h4>Forms</h4>
 <ul>
