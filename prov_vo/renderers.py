@@ -398,9 +398,9 @@ class VosiAvailabilityRenderer(BaseRenderer):
 
             # add possible optional nodes:
             for key in data.keys():
-                xml.startElement('vosi'+key, {})
+                xml.startElement('vosi:'+key, {})
                 xml.characters(smart_unicode(data[key]))
-                xml.endElement('vosi'+key)
+                xml.endElement('vosi:'+key)
 
             xml.endElement('vosi:availability')
 
