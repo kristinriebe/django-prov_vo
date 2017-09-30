@@ -34,6 +34,9 @@ urlpatterns = [
     # provdal form
     url(r'^provdal/$', views.provdal, name='provdal'),
     url(r'^provdalform/$', views.provdal_form, name='provdal_form'),
+    # vosi endpoints required by dali: capabilities (must be sibling to provdal, Sec. 2 of DALI), availability
+    url(r'^availability/$', views.vosi_availability, name='vosi_availability'),
+    url(r'^capabilities/$', views.vosi_capabilities, name='vosi_capabilities'),
 
     # graph overviews
     url(r'^graph/$', views.graph, name='graph'),
