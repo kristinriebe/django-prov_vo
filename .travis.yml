@@ -13,7 +13,7 @@ install:
 
 before_script:
 #- cp tests/travis.local.py tests/local.py
-#- mysql < testing/sql/daiquiri_data_obs.sql
+#- mysql < testing/sql/....sql
 - cd prov_vo
 
 script:

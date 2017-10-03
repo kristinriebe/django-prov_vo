@@ -3,6 +3,8 @@ from django.conf.urls import url, include
 from rest_framework import routers
 
 from . import views
+import vosi.views
+import vosi.urls
 
 app_name = 'prov_vo'
 
@@ -35,8 +37,8 @@ urlpatterns = [
     url(r'^provdal/$', views.provdal, name='provdal'),
     url(r'^provdalform/$', views.provdal_form, name='provdal_form'),
     # vosi endpoints required by dali: capabilities (must be sibling to provdal, Sec. 2 of DALI), availability
-    url(r'^availability/$', views.vosi_availability, name='vosi_availability'),
-    url(r'^capabilities/$', views.vosi_capabilities, name='vosi_capabilities'),
+    url(r'^availability/$', vosi.views.availability, name='vosi_availability'),
+    url(r'^capabilities/$', vosi.views.capabilities, name='vosi_capabilities'),
 
     # graph overviews
     url(r'^graph/$', views.graph, name='graph'),

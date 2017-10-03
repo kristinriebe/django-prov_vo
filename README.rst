@@ -12,8 +12,21 @@ Django prov_vo package
    :alt: Coverage Status
    :target: https://coveralls.io/github/kristinriebe/django-prov_vo?branch=master
 
+.. image:: http://img.shields.io/badge/license-APACHE-blue.svg?style=flat
+    :target: https://github.com/kristinriebe/django-prov_vo/blob/master/LICENSE
+
 This package provides a resuable django application which is intended to be used within a Django project, see e.g. https://github.com/kristinriebe/provenance-rave/. It provides an implementation of the
 IVOA Provenance Data Model (see http://www.ivoa.net/documents/ProvenanceDM/ for the latest version), with a REST API and a ProvDAL interface to retrieve the stored provenance metadata.
+
+
+Dependencies
+------------
+This package implements a ProvDAL interface, for which the VOSI resources :code:`availability` and :code:`capabilities` need to be defined. It uses the
+
+`django-vosi <https://github.com/kristinriebe/django-vosi>`_
+
+package for providing these.
+
 
 
 Installation
@@ -98,11 +111,9 @@ TODO
 * Move print-statements to error/debug log
 * Write tests for checking all the functionality
 * Use MySQL database/remote database instead of Sqlite3
-* check code coverage
 * write extended documentation
 * publish as PyPi package
 
 * Implement xml serialization, votable serialization, for REST api and for Prov-DAL endoint
 * Implement "description" classes, i.e. ActivityDescription etc. (if needed)
 * Find a better way to visualize activityFlow, collection, detail/basic etc.
-* Add VOSI interface, for ProvDAL
