@@ -10,9 +10,10 @@ install:
 - pip install -r requirements.txt
 - pip install -e .
 - pip install coveralls
+- git clone https://github.com/kristinriebe/django-vosi
 
 before_script:
-#- cp tests/travis.local.py tests/local.py
+- cp tests/travis.local.py tests/local.py
 #- mysql < testing/sql/....sql
 - cd prov_vo
 

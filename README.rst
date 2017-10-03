@@ -65,6 +65,15 @@ Installation
         'prov_vo',
     ]
 
+* Also install the `django-vosi <https://gihub.com/kristinriebe/django-vosi>`_ package and add to INSTALLED_APPS::
+
+    INSTALLED_APPS = [
+        ...
+        'prov_vo',
+        'vosi',
+    ]
+
+
 * Include the prov_vo URLconf in your project's urls.py like this::
 
     url(r'^prov_vo/', include('prov_vo.urls')),

@@ -2,11 +2,15 @@ import os
 import sys
 sys.path.append('..')
 
+from .local import *
+
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 INSTALLED_APPS = [
 	'tests',
 	'prov_vo',
+	'vosi',
 	'rest_framework',
 	'django.contrib.auth',
 	'django.contrib.contenttypes',
