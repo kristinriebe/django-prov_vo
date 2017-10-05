@@ -140,12 +140,12 @@ class EntitySerializer(NonNullCustomSerializer):
     prov_type = CustomCharField(source='type', custom_field_name='prov:type')
     prov_description = CustomCharField(source='annotation', custom_field_name='prov:description')
     voprov_rights = CustomCharField(source='rights', custom_field_name='voprov:rights')
-    voprov_dataType = CustomCharField(source='dataType', custom_field_name='voprov:dataType')
-    voprov_storageLocation = CustomCharField(source='storageLocation', custom_field_name='voprov:storageLocation')
+    custom_dataType = CustomCharField(source='dataType', custom_field_name='custom:dataType')
+    custom_storageLocation = CustomCharField(source='storageLocation', custom_field_name='custom:storageLocation')
 
     class Meta:
         model = Entity
-        fields = ('prov_id', 'prov_label', 'prov_type', 'prov_description', 'voprov_rights', 'voprov_dataType', 'voprov_storageLocation')
+        fields = ('prov_id', 'prov_label', 'prov_type', 'prov_description', 'voprov_rights', 'custom_dataType', 'custom_storageLocation')
 
 
 class AgentSerializer(NonNullCustomSerializer):
@@ -154,11 +154,12 @@ class AgentSerializer(NonNullCustomSerializer):
     prov_type = CustomCharField(source='type', custom_field_name='prov:type')
     voprov_name = CustomCharField(source='name', custom_field_name='prov:label')
     voprov_email = CustomCharField(source='email', custom_field_name='voprov:email')
+    voprov_address = CustomCharField(source='email', custom_field_name='voprov:address')
     prov_description = CustomCharField(source='annotation', custom_field_name='prov:description')
 
     class Meta:
         model = Agent
-        fields = ('prov_id', 'voprov_name', 'prov_type', 'voprov_email', 'prov_description')
+        fields = ('prov_id', 'voprov_name', 'prov_type', 'voprov_email', 'voprov_email', 'voprov_address', 'prov_description')
 
 
 class UsedSerializer(NonNullCustomSerializer):
@@ -250,7 +251,7 @@ class W3CCollectionSerializer(EntitySerializer):
 
     class Meta:
         model = Collection
-        fields = ('prov_id', 'prov_label', 'prov_type', 'prov_description', 'voprov_rights', 'voprov_dataType', 'voprov_storageLocation')
+        fields = ('prov_id', 'prov_label', 'prov_type', 'prov_description', 'voprov_rights', 'custom_dataType', 'custom_storageLocation')
 
 
 class W3CProvenanceSerializer(serializers.Serializer):
@@ -468,19 +469,19 @@ class VOEntitySerializer(NonNullCustomSerializer):
     voprov_type = CustomCharField(source='type', custom_field_name='voprov:type')
     voprov_annotation = CustomCharField(source='annotation', custom_field_name='voprov:annotation')
     voprov_rights = CustomCharField(source='rights', custom_field_name='voprov:rights')
-    voprov_dataType = CustomCharField(source='dataType', custom_field_name='voprov:dataType')
-    voprov_storageLocation = CustomCharField(source='storageLocation', custom_field_name='voprov:storageLocation')
+    custom_dataType = CustomCharField(source='dataType', custom_field_name='custom:dataType')
+    custom_storageLocation = CustomCharField(source='storageLocation', custom_field_name='custom:storageLocation')
 
     class Meta:
         model = Entity
-        fields = ('voprov_id', 'voprov_name', 'voprov_type', 'voprov_annotation', 'voprov_rights', 'voprov_dataType', 'voprov_storageLocation')
+        fields = ('voprov_id', 'voprov_name', 'voprov_type', 'voprov_annotation', 'voprov_rights', 'custom_dataType', 'custom_storageLocation')
 
 
 class VOCollectionSerializer(VOEntitySerializer):
 
     class Meta:
         model = Collection
-        fields = ('voprov_id', 'voprov_name', 'voprov_type', 'voprov_annotation', 'voprov_rights', 'voprov_dataType', 'voprov_storageLocation')
+        fields = ('voprov_id', 'voprov_name', 'voprov_type', 'voprov_annotation', 'voprov_rights', 'custom_dataType', 'custom_storageLocation')
 
 
 class VOAgentSerializer(NonNullCustomSerializer):
@@ -489,11 +490,12 @@ class VOAgentSerializer(NonNullCustomSerializer):
     voprov_type = CustomCharField(source='type', custom_field_name='voprov:type')
     voprov_name = CustomCharField(source='name', custom_field_name='voprov:name')
     voprov_email = CustomCharField(source='email', custom_field_name='voprov:email')
-    voprov_annotation = CustomCharField(source='annotation', custom_field_name='voprov:annotation')
+    voprov_address = CustomCharField(source='address', custom_field_name='voprov:address')
+    custom_annotation = CustomCharField(source='annotation', custom_field_name='custom:annotation')
 
     class Meta:
         model = Agent
-        fields = ('voprov_id', 'voprov_name', 'voprov_type', 'voprov_email', 'voprov_annotation')
+        fields = ('voprov_id', 'voprov_name', 'voprov_type', 'voprov_email', 'voprov_address', 'custom_annotation')
 
 
 class VOUsedSerializer(NonNullCustomSerializer):

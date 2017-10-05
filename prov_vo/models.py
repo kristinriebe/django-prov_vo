@@ -17,18 +17,23 @@ ACTIVITY_TYPE_CHOICES = (
 )
 
 ENTITY_TYPE_CHOICES = (
-    ('prov:Collection', 'prov:Collection'),
-    ('voprov:dataSet', 'voprov:catalog'),
+    ('voprov:Collection', 'voprov:Collection'),
+    ('voprov:Entity', 'voprov:Entity'),
 )
 
 #DATA_TYPE_CHOICES = (
 #)
 
 AGENT_TYPE_CHOICES = (
-    ('voprov:Project','voprov:Project'),
-    ('prov:Person','prov:Person'),
+    ('voprov:Organization','voprov:Organization'),
+    ('voprov:Individual','voprov:Individual'),
 )
 
+ENTITY_RIGHTS_CHOICES = (
+    ('voprov:public', 'voprov:public'),
+    ('voprov:restricted', 'voprov:restricted'),
+    ('voprov:internal', 'voprov:internal')
+)
 
 # main ProvenanceDM classes:
 @python_2_unicode_compatible
@@ -50,9 +55,13 @@ class Entity(models.Model):
     name = models.CharField(max_length=128, null=True) # human readable label
     type = models.CharField(max_length=128, null=True, choices=ENTITY_TYPE_CHOICES) # types of entities: single entity, dataset
     annotation = models.CharField(max_length=1024, null=True, blank=True)
-    rights = models.CharField(max_length=128, null=True, blank=True)
+    rights = models.CharField(max_length=128, null=True, blank=True, choices=ENTITY_RIGHTS_CHOICES)
+
+    # non-standard attributes:
     dataType= models.CharField(max_length=128, null=True, blank=True)
+#    # maybe use obscore_access_format?
     storageLocation = models.CharField('storage location', max_length=1024, null=True, blank=True)
+#    # may be use obscore_access_url here? But this is not the same as dorectory path on a server ...
 
     def __str__(self):
         return self.name
@@ -62,8 +71,11 @@ class Agent(models.Model):
     id = models.CharField(primary_key=True, max_length=128)
     name = models.CharField(max_length=128, null=True) # human readable label, firstname + lastname
     type = models.CharField(max_length=128, null=True, choices=AGENT_TYPE_CHOICES) # types of entities: single entity, dataset
-    annotation = models.CharField(max_length=1024, null=True, blank=True)
     email = models.CharField(max_length=128, null=True, blank=True)
+    address = models.CharField(max_length=128, null=True, blank=True)
+
+    # non standard attribute:
+    annotation = models.CharField(max_length=1024, null=True, blank=True)
 
     def __str__(self):
         return self.name

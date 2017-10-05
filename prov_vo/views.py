@@ -390,9 +390,8 @@ def provdal(request):
     agent_flag = set_true_false('AGENT', agent_flag)
 
     prefix = {
-        "voprov": "http://www.ivoa.net/documents/ProvenanceDM/voprov/",
-        "org": "http://www.ivoa.net/documents/ProvenanceDM/voprov/org/",
-        "vo": "http://www.ivoa.net/documents/ProvenanceDM/voprov/vo",
+        "voprov": "http://www.ivoa.net/documents/ProvenanceDM/ns/voprov/",
+        "custom": "http://www.ivoa.net/documents/ProvenanceDM/ns/custom/",  # some extra keywords
         "prov": "http://www.w3.org/ns/prov#",  # defined by default
         "xsd": "http://www.w3.org/2000/10/XMLSchema#"  # defined by default
     }
