@@ -369,7 +369,7 @@ def provdal(request):
         for i in id_list:
             ids += 'ID=%s&' % i
         return render(request, 'prov_vo/provdal_graph.html',
-            {'url': reverse('prov_vo:provdal') + "?%sDEPTH=%s&DIRECTION=%s&MEMBERS=%s&STEPS=%s&AGENT=%s&RESPONSEFORMAT=GRAPH-JSON&MODEL=%s" % (ids, str(depth), str(direction), str(members), str(steps), str(agent), str(model))})
+            {'url': reverse('prov_vo:provdal') + "?%sDEPTH=%s&DIRECTION=%s&MEMBERS=%s&STEPS=%s&AGENT=%s&RESPONSEFORMAT=GRAPH-JSON&MODEL=%s" % (ids, str(depth), str(direction), str(members_flag), str(steps_flag), str(agent_flag), str(model))})
 
     # check flags
     countdown = -1
