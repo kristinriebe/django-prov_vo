@@ -1,0 +1,7 @@
+[run]
+source = prov_vo
+
+[report]
+omit = \
+    */tests/test_*
+    */migrations/*
