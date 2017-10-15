@@ -301,7 +301,7 @@ def provdal_form(request):
                 agent = form.cleaned_data['agent']
                 format = form.cleaned_data['format']
                 compliance = form.cleaned_data['model']
-
+#
                 return HttpResponseRedirect(
                     reverse('prov_vo:provdal')+"?ID=%s&DEPTH=%s&DIRECTION=%s&MEMBERS=%s&STEPS=%s&AGENT=%s&RESPONSEFORMAT=%s&MODEL=%s" %
                     (str(obj_id), str(depth).upper(), str(direction).upper(), str(members).upper(),

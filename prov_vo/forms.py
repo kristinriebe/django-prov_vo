@@ -17,14 +17,16 @@ class ProvDalForm(forms.Form):
         choices=[('1', '1'), ('2', '2'), ('3','3'), ('4', '4'), ('5', '5'), ('0', '0'), ('ALL','all')],
         widget=forms.Select(),
         help_text="Specify number of relations to be tracked",
-        initial='1'
+        initial='1',
+        required=False
     )
     direction = forms.ChoiceField(
         label="Direction",
         choices=[('BACK', 'back'), ('FORTH','forth')],
         widget=forms.RadioSelect(),
         help_text="Choose the tracking direction",
-        initial='BACK'
+        initial='BACK',
+        required=False
     )
 
     model = forms.ChoiceField(
@@ -32,7 +34,8 @@ class ProvDalForm(forms.Form):
         choices=[('IVOA','IVOA'), ('W3C', 'W3C')],
         widget=forms.RadioSelect(),
         help_text="Choose W3C for W3C Prov-DM compliant serialization",
-        initial='IVOA'
+        initial='IVOA',
+        required=False
     )
 
     format = forms.ChoiceField(
@@ -40,7 +43,8 @@ class ProvDalForm(forms.Form):
         choices=[('PROV-N', 'PROV-N'), ('PROV-JSON','PROV-JSON'), ('GRAPH', 'Graphics')],
         widget=forms.RadioSelect(),
         help_text="Format of returned provenance record",
-        initial='PROV-JSON'
+        initial='PROV-JSON',
+        required=False
     )
 
     members = forms.BooleanField(

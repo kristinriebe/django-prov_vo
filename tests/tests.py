@@ -13,7 +13,7 @@ from django.test.utils import setup_test_environment
 from prov_vo.models import Activity, ActivityFlow, HadStep
 from prov_vo.models import Entity, Collection, WasGeneratedBy, Used, WasDerivedFrom, WasInformedBy, HadMember
 from prov_vo.models import Agent, WasAssociatedWith, WasAttributedTo
-#from prov_vo.urls import *
+from prov_vo.forms import ProvDalForm
 
 # Run all tests:
 #   python manage.py test prov_vo
@@ -579,13 +579,17 @@ class ProvDAL_Graph_TestCase(TestCase):
 
 class ProvDALForm_TestCase(TestCase):
 
+    def setUp(self):
+        e = Entity.objects.create(id="rave:dr4", name="RAVE DR4")
+        e.save()
+
     def test_provdalform_settings(self):
         client = Client()
         response = client.get(reverse('prov_vo:provdal_form'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'prov_vo/provdalform.html')
 
-    # Test what happensif PROV_VO_CONFIG does not contain 'provdalform' keyword:
+    # Test what happens, if PROV_VO_CONFIG does not contain 'provdalform' keyword:
     # TODO: => test does not work, because for some reason in forms.py the
     #       original settings are imported (but in views it's the custom ones ...)
     # def test_provdalform_settingsfail(self):
@@ -595,3 +599,30 @@ class ProvDALForm_TestCase(TestCase):
     #         self.assertEqual(response.status_code, 200)
     #         self.assertTemplateUsed(response, 'prov_vo/provdalform.html')
 
+    def test_provdalform(self):
+        form_data = {'obj_id': 'rave:dr4'}
+        form = ProvDalForm(form_data)
+        self.assertTrue(form.is_valid())
+
+    def test_provdalform_invalid(self):
+        form_data = {}
+        form = ProvDalForm(form_data)
+        self.assertFalse(form.is_valid())
+
+    def test_provdalform_postempty(self):
+        client = Client()
+        response = client.post(reverse('prov_vo:provdal_form'))
+        # if no data were submitted, just display the form again:
+        self.assertEqual(response.status_code, 200)
+        self.assertFormError(response, 'form', 'obj_id', 'This field is required.')
+        self.assertTemplateUsed(response, 'prov_vo/provdalform.html')
+
+    def test_provdalform_post(self):
+        client = Client()
+        response = client.post(reverse('prov_vo:provdal_form'),
+            {'obj_id': 'rave:dr4', 'depth': '1', 'direction': 'BACK', 'format': 'PROV-JSON', 'model': 'IVOA'})
+        # should redirect to provdal:
+        self.assertEqual(response.status_code, 302)
+
+        url = '/prov_vo/provdal/?ID=rave:dr4&DEPTH=1&DIRECTION=BACK&MEMBERS=FALSE&STEPS=FALSE&AGENT=FALSE&RESPONSEFORMAT=PROV-JSON&MODEL=IVOA'
+        self.assertEqual(response.url, url)
