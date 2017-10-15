@@ -21,9 +21,6 @@ ENTITY_TYPE_CHOICES = (
     ('voprov:Entity', 'voprov:Entity'),
 )
 
-#DATA_TYPE_CHOICES = (
-#)
-
 AGENT_TYPE_CHOICES = (
     ('voprov:Organization','voprov:Organization'),
     ('voprov:Individual','voprov:Individual'),
@@ -31,8 +28,29 @@ AGENT_TYPE_CHOICES = (
 
 ENTITY_RIGHTS_CHOICES = (
     ('voprov:public', 'voprov:public'),
-    ('voprov:restricted', 'voprov:restricted'),
-    ('voprov:internal', 'voprov:internal')
+    ('voprov:secure', 'voprov:secure'),
+    ('voprov:propriatary', 'voprov:proprietary')
+)
+
+# datatypes from VOTable 1.3 REC:
+DATATYPE_CHOICES = (
+    ('vo:boolean', 'vo:boolean'),
+    ('vo:bit', 'vo:bit'),
+    ('vo:unsignedByte', 'vo:unsignedByte'),
+    ('vo:short', 'vo:short'),
+    ('vo:int', 'vo:int'),
+    ('vo:long', 'vo:long'),
+    ('vo:char', 'vo:char'),
+    ('vo:unicodeChar', 'vo:unicodeChar'),
+    ('vo:float', 'vo:float'),
+    ('vo:double', 'vo:double'),
+    ('vo:floatComplex', 'vo:floatComplex'),
+    ('vo:doubleComplex', 'vo:doubleComplex')
+)
+
+XTYPE_CHOICES = (
+    ('timestamp', 'timestamp'),
+    ('position', 'position')
 )
 
 # main ProvenanceDM classes:
@@ -58,7 +76,7 @@ class Entity(models.Model):
     rights = models.CharField(max_length=128, null=True, blank=True, choices=ENTITY_RIGHTS_CHOICES)
 
     # non-standard attributes:
-    dataType= models.CharField(max_length=128, null=True, blank=True)
+    datatype= models.CharField(max_length=128, null=True, blank=True, choices=DATATYPE_CHOICES)
 #    # maybe use obscore_access_format?
     storageLocation = models.CharField('storage location', max_length=1024, null=True, blank=True)
 #    # may be use obscore_access_url here? But this is not the same as dorectory path on a server ...
@@ -80,6 +98,7 @@ class Agent(models.Model):
     def __str__(self):
         return self.name
 
+
 # collection classes
 @python_2_unicode_compatible
 class ActivityFlow(Activity):
@@ -92,6 +111,36 @@ class Collection(Entity):
 
     def __str__(self):
         return self.name
+
+
+# parameter classes
+@python_2_unicode_compatible
+class Parameter(models.Model):
+    id = models.CharField(primary_key=True, max_length=128)
+    description = models.ForeignKey("ParameterDescription")
+    value = models.CharField(max_length=128, null=True, blank=True)
+
+    def __str__(self):
+        return self.id
+
+@python_2_unicode_compatible
+class ParameterDescription(models.Model):
+    id = models.CharField(primary_key=True, max_length=128)
+    name = models.CharField(max_length=128, null=True, blank=True)
+    annotation = models.CharField(max_length=512, null=True, blank=True)
+    # TODO: should datatype be mandatory?
+    datatype = models.CharField(max_length=128, null=True, blank=True, choices=DATATYPE_CHOICES)
+    xtype = models.CharField(max_length=128, null=True, blank=True, choices=XTYPE_CHOICES)
+    unit = models.CharField(max_length=128, null=True, blank=True)
+    ucd = models.CharField(max_length=128, null=True, blank=True)
+    utype = models.CharField(max_length=128, null=True, blank=True)
+    arraysize = models.IntegerField(null=True, blank=True)
+    minval = models.CharField(max_length=128, null=True, blank=True)
+    maxval = models.CharField(max_length=128, null=True, blank=True)
+    options = models.CharField(max_length=1024, null=True, blank=True)
+
+    def __str__(self):
+        return self.id
 
 # relation classes
 @python_2_unicode_compatible
