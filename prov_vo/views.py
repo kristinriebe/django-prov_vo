@@ -140,11 +140,11 @@ def allprov(request, format):
         "xsd": "http://www.w3.org/2000/10/XMLSchema#"  # defined by default
     }
 
-    # add prefixes from settings:
+    # add prefixes from settings, if existing:
     try:
         for key, value in settings.PROV_VO_CONFIG.namespaces.items():
             prefix[key] = value
-    except AttributeError, e:
+    except:
         pass
 
 
@@ -180,9 +180,7 @@ def allprov(request, format):
 
     else:
         # format is not known, return error
-        provstr = "Sorry, unknown format %s was requested, cannot handle this." % format
-
-    return HttpResponse(provstr, content_type='text/plain; charset=utf-8')
+        return HttpResponseBadRequest('Bad request: format %s is not supported by this service.' % format)
 
 
 def prettyprovn(request):
@@ -291,7 +289,7 @@ def provdal_form(request):
 
         # check whether it's valid:
         if form.is_valid():
-        # process the data in form.cleaned_data as required
+            # process the data in form.cleaned_data as required
             try:
                 obj_id = form.cleaned_data['obj_id']
                 depth = form.cleaned_data['depth']
@@ -301,7 +299,7 @@ def provdal_form(request):
                 agent = form.cleaned_data['agent']
                 format = form.cleaned_data['format']
                 compliance = form.cleaned_data['model']
-#
+
                 return HttpResponseRedirect(
                     reverse('prov_vo:provdal')+"?ID=%s&DEPTH=%s&DIRECTION=%s&MEMBERS=%s&STEPS=%s&AGENT=%s&RESPONSEFORMAT=%s&MODEL=%s" %
                     (str(obj_id), str(depth).upper(), str(direction).upper(), str(members).upper(),
@@ -401,7 +399,7 @@ def provdal(request):
     try:
         for key, value in settings.PROV_VO_CONFIG['namespaces'].items():
             prefix[key] = value
-    except AttributeError, e:
+    except:
         pass
 
     prov = {
