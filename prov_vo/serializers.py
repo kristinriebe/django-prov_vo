@@ -735,7 +735,7 @@ class ProvenanceGraphSerializer(serializers.Serializer):
 
 
     def get_nodes(self, obj):
-        print 'nodes model: ', self._model
+        #print 'nodes model: ', self._model
         if self._model == 'IVOA':
             name = 'voprov:name'
             nid = 'voprov:id'

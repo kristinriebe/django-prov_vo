@@ -486,3 +486,35 @@ activity(ex:act2, -, -, [voprov:name="Activity 2"])
 wasInformedBy(ex:act2, ex:act1)
 """
         self.assertEqual(content, expected)
+
+class ProvDAL_Graph_TestCase(TestCase):
+
+    def setUp(self):
+        e = Entity.objects.create(id="rave:dr4", name="RAVE DR4")
+        e.save()
+        e0 = Entity.objects.create(id="rave:obs", name="RAVE observations")
+        e0.save()
+
+        wd = WasDerivedFrom.objects.create(generatedEntity=e, usedEntity=e0)
+        wd.save()
+
+        #self.client = Client()
+
+    def test_getProvdalGraph(self):
+        client = Client()
+        url = reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=1&RESPONSEFORMAT=GRAPH'
+        response = client.get(url)
+        #print 'response status: ', response.status_code  # --> 500!?
+        #self.assertTemplateUsed(response, 'prov_vo/provdal_graph.html')
+        self.assertEqual(response.content, 'prov_vo/provdal_graph.html')
+
+    def test_getProvdalGraphJson(self):
+        client = Client()
+        url = reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=1&RESPONSEFORMAT=GRAPH-JSON'
+        response = client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        expected = \
+"""{"nodes": [{"type": "entity", "name": "RAVE DR4"}, {"type": "entity", "name": "RAVE observations"}],""" + \
+""" "links": [{"source": 0, "type": "wasDerivedFrom", "target": 1, "value": 0.2}]}"""
+        self.assertEqual(response.content, expected)
