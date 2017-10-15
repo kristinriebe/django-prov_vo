@@ -11,7 +11,7 @@ from django.test import Client
 from django.test.utils import setup_test_environment
 
 from prov_vo.models import Activity, ActivityFlow, HadStep
-from prov_vo.models import Entity, WasGeneratedBy, Used, WasDerivedFrom, WasInformedBy, HadMember
+from prov_vo.models import Entity, Collection, WasGeneratedBy, Used, WasDerivedFrom, WasInformedBy, HadMember
 from prov_vo.models import Agent, WasAssociatedWith, WasAttributedTo
 #from prov_vo.urls import *
 
@@ -189,25 +189,6 @@ class ProvDAL_Accept_TestCase(TestCase):
         response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent', HTTP_ACCEPT="image/png")
         self.assertEqual(response.status_code, 415)
 
-class ProvDALForm_TestCase(TestCase):
-
-    def test_provdalform_settings(self):
-        client = Client()
-        response = client.get(reverse('prov_vo:provdal_form'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'prov_vo/provdalform.html')
-
-    # Test what happensif PROV_VO_CONFIG does not contain 'provdalform' keyword:
-    # TODO: => test does not work, because for some reason in forms.py the
-    #       original settings are imported (but in views it's the custom ones ...)
-    # def test_provdalform_settingsfail(self):
-    #     client = Client()
-    #     with self.settings(PROV_VO_CONFIG = {'notprovdal': {'foo': 'bar'}}):
-    #         response = client.get(reverse('prov_vo:provdal_form'))
-    #         self.assertEqual(response.status_code, 200)
-    #         self.assertTemplateUsed(response, 'prov_vo/provdalform.html')
-
-
 
 class ProvDAL_General_TestCase(TestCase):
 
@@ -356,6 +337,14 @@ agent(org:rave, [voprov:name="RAVE project"])
         found = re.search(r"^act.*", response.content, flags=re.MULTILINE)
         self.assertEqual(found.group(0), expected)
 
+    def test_getProvdalActivityFlowW3C(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow&RESPONSEFORMAT=PROV-N&MODEL=W3C')
+        self.assertEqual(response.status_code, 200)
+        expected = 'activity(rave:flow, -, -, [prov:label="myflow", voprov:votype="voprov:activityFlow"])'
+        found = re.search(r"^act.*", response.content, flags=re.MULTILINE)
+        self.assertEqual(found.group(0), expected)
+
     def test_getProvdalActivityFlowDepth2(self):
         client = Client()
         response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow&DEPTH=2&RESPONSEFORMAT=PROV-N')
@@ -371,6 +360,18 @@ agent(org:rave, [voprov:name="RAVE project"])
         self.assertEqual(response.status_code, 200)
         found = re.findall(r"^act.*", response.content, flags=re.MULTILINE)
         self.assertEqual(len(found), 2)
+
+    def test_getProvdalActivityFlowIncludeStepsW3C(self):
+        # If STEPS=TRUE, substeps of the activityFlow shall be followed,
+        # thus both, activityFlow and activity must be returned
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow&DEPTH=3&STEPS=true&RESPONSEFORMAT=PROV-N&MODEL=W3C')
+        self.assertEqual(response.status_code, 200)
+        found = re.findall(r"^act.*", response.content, flags=re.MULTILINE)
+        self.assertEqual(len(found), 2)
+
+        found2 = re.findall(r"^wasInfluencedBy.*", response.content, flags=re.MULTILINE)
+        self.assertEqual(len(found2), 1)
 
     def test_getProvdalActivityDepth2(self):
         client = Client()
@@ -507,6 +508,43 @@ wasInformedBy(ex:act2, ex:act1)
 """
         self.assertEqual(content, expected)
 
+
+class ProvDAL_Membership_TestCase(TestCase):
+
+    def setUp(self):
+        c = Collection.objects.create(id="rave:dr4", name="RAVE DR4")
+        c.save()
+        e = Entity.objects.create(id="rave:stellar_properties", name="RAVE stellar properties")
+        e.save()
+
+        hm = HadMember.objects.create(collection=c, entity=e)
+        hm.save()
+
+    def test_getProvdalEntity(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:stellar_properties&DEPTH=1&RESPONSEFORMAT=PROV-N')
+        self.assertEqual(response.status_code, 200)
+        found = re.findall(r"^entity.*", response.content, flags=re.MULTILINE)
+        self.assertEqual(len(found), 2)
+
+    def test_getProvdalCollection(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=1&RESPONSEFORMAT=PROV-N')
+        self.assertEqual(response.status_code, 200)
+        found = re.findall(r"^entity.*", response.content, flags=re.MULTILINE)
+        self.assertEqual(len(found), 1)
+
+    def test_getProvdalCollectionIncludeMembers(self):
+        # If MEMBERS=TRUE, members of a collection shall be followed,
+        # thus both, collection and entity must be returned
+        # (both serialized as "entity", so far)
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=1&MEMBERS=true&RESPONSEFORMAT=PROV-N')
+        self.assertEqual(response.status_code, 200)
+        found = re.findall(r"^entity.*", response.content, flags=re.MULTILINE)
+        self.assertEqual(len(found), 2)
+
+
 class ProvDAL_Graph_TestCase(TestCase):
 
     def setUp(self):
@@ -537,3 +575,23 @@ class ProvDAL_Graph_TestCase(TestCase):
 """{"nodes": [{"type": "entity", "name": "RAVE DR4"}, {"type": "entity", "name": "RAVE observations"}],""" + \
 """ "links": [{"source": 0, "type": "wasDerivedFrom", "target": 1, "value": 0.2}]}"""
         self.assertEqual(response.content, expected)
+
+
+class ProvDALForm_TestCase(TestCase):
+
+    def test_provdalform_settings(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal_form'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'prov_vo/provdalform.html')
+
+    # Test what happensif PROV_VO_CONFIG does not contain 'provdalform' keyword:
+    # TODO: => test does not work, because for some reason in forms.py the
+    #       original settings are imported (but in views it's the custom ones ...)
+    # def test_provdalform_settingsfail(self):
+    #     client = Client()
+    #     with self.settings(PROV_VO_CONFIG = {'notprovdal': {'foo': 'bar'}}):
+    #         response = client.get(reverse('prov_vo:provdal_form'))
+    #         self.assertEqual(response.status_code, 200)
+    #         self.assertTemplateUsed(response, 'prov_vo/provdalform.html')
+
