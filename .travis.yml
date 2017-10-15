@@ -13,7 +13,6 @@ install:
 - git clone https://github.com/kristinriebe/django-vosi
 
 before_script:
-- cd prov_vo
 - cp tests/travis.local.py tests/local.py
 #- mysql < testing/sql/....sql
 

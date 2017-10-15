@@ -1,7 +1,6 @@
 from django import forms
-from django.conf import settings
 from django.utils.translation import gettext as _
-from prov_vo.models import Entity
+from django.conf import settings
 
 
 class ProvDalForm(forms.Form):
@@ -76,5 +75,5 @@ class ProvDalForm(forms.Form):
         formsettings = settings.PROV_VO_CONFIG['provdalform']
         if 'obj_id.help_text' in formsettings:
             obj_id.help_text = formsettings['obj_id.help_text']
-    except AttributeError, e:
+    except KeyError, e:
         pass

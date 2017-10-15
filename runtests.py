@@ -8,7 +8,7 @@ from django.conf import settings
 from django.test.utils import get_runner
 
 def main():
-    parser = argparse.ArgumentParser(description='Run the tests for django_prov_vo.')
+    parser = argparse.ArgumentParser(description='Run the tests for django-prov_vo.')
     parser.add_argument('test_label', nargs='*', help='Module paths to test; can be modulename, modulename.TestCase or modulename.TestCase.test_method')
 
     parser.add_argument('-k', '--keepdb', action='store_true', help='Preserves the test DB between runs.')

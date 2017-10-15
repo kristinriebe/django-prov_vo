@@ -2,6 +2,7 @@ import datetime
 import re
 import json
 
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils import timezone
 from django.test import TestCase
@@ -187,6 +188,25 @@ class ProvDAL_Accept_TestCase(TestCase):
         client = Client()
         response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent', HTTP_ACCEPT="image/png")
         self.assertEqual(response.status_code, 415)
+
+class ProvDALForm_TestCase(TestCase):
+
+    def test_provdalform_settings(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal_form'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'prov_vo/provdalform.html')
+
+    # Test what happensif PROV_VO_CONFIG does not contain 'provdalform' keyword:
+    # TODO: => test does not work, because for some reason in forms.py the
+    #       original settings are imported (but in views it's the custom ones ...)
+    # def test_provdalform_settingsfail(self):
+    #     client = Client()
+    #     with self.settings(PROV_VO_CONFIG = {'notprovdal': {'foo': 'bar'}}):
+    #         response = client.get(reverse('prov_vo:provdal_form'))
+    #         self.assertEqual(response.status_code, 200)
+    #         self.assertTemplateUsed(response, 'prov_vo/provdalform.html')
+
 
 
 class ProvDAL_General_TestCase(TestCase):
@@ -504,9 +524,8 @@ class ProvDAL_Graph_TestCase(TestCase):
         client = Client()
         url = reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=1&RESPONSEFORMAT=GRAPH'
         response = client.get(url)
-        #print 'response status: ', response.status_code  # --> 500!?
-        #self.assertTemplateUsed(response, 'prov_vo/provdal_graph.html')
-        self.assertEqual(response.content, 'prov_vo/provdal_graph.html')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'prov_vo/provdal_graph.html')
 
     def test_getProvdalGraphJson(self):
         client = Client()

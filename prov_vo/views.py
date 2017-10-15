@@ -288,6 +288,7 @@ def provdal_form(request):
 
     if request.method == 'POST':
         form = ProvDalForm(request.POST)
+
         # check whether it's valid:
         if form.is_valid():
         # process the data in form.cleaned_data as required
