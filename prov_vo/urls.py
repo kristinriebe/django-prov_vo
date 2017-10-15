@@ -29,7 +29,7 @@ urlpatterns = [
     # do NOT use a namespace here, because cannot have nested namespaces (prov_vo:api:activites-list won't work)
     url(r'^api/', include(router.urls)),
 
-    # provn of everything:
+    # serialization of everything:
     url(r'^allprov/(?P<format>[a-zA-Z-]+)$', views.allprov, name='allprov'),
     url(r'^prettyprovn/$', views.prettyprovn, name='prettyprovn'),
 

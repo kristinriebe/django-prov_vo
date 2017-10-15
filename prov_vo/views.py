@@ -128,7 +128,7 @@ def convert_to_dict_querysets(listqueryset):
     return objdict
 
 
-# simple prov-n view of everything
+# simple view to serialize everything, W3C compatible
 def allprov(request, format):
 
     # first store everything in a prov-dictionary

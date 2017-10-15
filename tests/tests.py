@@ -498,9 +498,7 @@ wasInformedBy(ex:act2, ex:act1)
         client = Client()
         response = client.get(reverse('prov_vo:provdal')+'?ID=ex:act1&DEPTH=1&DIRECTION=FORTH&RESPONSEFORMAT=PROV-N')
         self.assertEqual(response.status_code, 200)
-        content = re.sub(r'document.*\n', '', response.content)
-        content = re.sub(r'endDocument', '', content)
-        content = re.sub(r'prefix.*\n', '', content)
+        content = get_content(response)
         expected = \
 """activity(ex:act1, -, -, [voprov:name="Activity 1"])
 activity(ex:act2, -, -, [voprov:name="Activity 2"])
@@ -626,3 +624,44 @@ class ProvDALForm_TestCase(TestCase):
 
         url = '/prov_vo/provdal/?ID=rave:dr4&DEPTH=1&DIRECTION=BACK&MEMBERS=FALSE&STEPS=FALSE&AGENT=FALSE&RESPONSEFORMAT=PROV-JSON&MODEL=IVOA'
         self.assertEqual(response.url, url)
+
+class View_Allprov_TestCase(TestCase):
+    def setUp(self):
+        e = Entity.objects.create(id="ex:ent1", name="Entity 1")
+        e.save()
+
+        a1 = Activity.objects.create(id="ex:act1", name="Activity 1")
+        a1.save()
+
+        a2 = Activity.objects.create(id="ex:act2", name="Activity 2")
+        a2.save()
+
+    def test_allprov_provn(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:allprov', kwargs={'format':'PROV-N'}))
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""activity(ex:act1, -, -, [prov:label="Activity 1"])
+activity(ex:act2, -, -, [prov:label="Activity 2"])
+entity(ex:ent1, [prov:label="Entity 1"])
+"""
+        self.assertEqual(content, expected)
+
+    def test_allprov_provjson(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:allprov', kwargs={'format':'PROV-JSON'}))
+        self.assertEqual(response.status_code, 200)
+        content = json.loads(response.content)
+        expected = \
+"""activity(ex:act1, -, -, [prov:label="Activity 1"])
+activity(ex:act2, -, -, [prov:label="Activity 2"])
+entity(ex:ent1, [prov:label="Entity 1"])
+"""
+        self.assertEqual(content['activity'],
+            {'ex:act1': {'prov:id': 'ex:act1', 'prov:label': 'Activity 1'},
+             'ex:act2': {'prov:id': 'ex:act2', 'prov:label': 'Activity 2'}
+            })
+        self.assertEqual(content['entity'],
+            {'ex:ent1': {'prov:id': 'ex:ent1', 'prov:label': 'Entity 1'}
+            })
