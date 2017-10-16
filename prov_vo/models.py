@@ -117,8 +117,9 @@ class Collection(Entity):
 @python_2_unicode_compatible
 class Parameter(models.Model):
     id = models.CharField(primary_key=True, max_length=128)
-    description = models.ForeignKey("ParameterDescription")
+    description = models.ForeignKey("ParameterDescription", null=True)
     value = models.CharField(max_length=128, null=True, blank=True)
+    activity = models.ForeignKey(Activity, null=True)
 
     def __str__(self):
         return self.id
@@ -141,6 +142,7 @@ class ParameterDescription(models.Model):
 
     def __str__(self):
         return self.id
+
 
 # relation classes
 @python_2_unicode_compatible
