@@ -1,7 +1,8 @@
 from .models import (
     Activity, Entity, Agent, Used, WasGeneratedBy,
     WasAssociatedWith, WasAttributedTo, HadMember, WasDerivedFrom,
-    WasInformedBy, HadStep, ActivityFlow, Collection
+    WasInformedBy, HadStep, ActivityFlow, Collection, Parameter,
+    ParameterDescription
 )
 import logging
 from django.http import QueryDict
@@ -256,6 +257,13 @@ def track_activity(activity, prov, countdown, direction='BACK', members_flag=Fal
 
     # decrease countdown
     countdown -= 1
+
+    # add parameters of the current activity, if existing;
+    # independent of back/forth
+    queryset = Parameter.objects.filter(activity=activity.id)
+    for p in queryset:
+        prov['parameter'][p.id] = p
+        prov['parameterDescription'][p.description.id] = p.description
 
     # First check the 'shortcut' relationship 'wasInformedBy',
     # so I get the potentially farthest path first and do not

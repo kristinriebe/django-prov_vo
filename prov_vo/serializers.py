@@ -19,7 +19,9 @@ from .models import (
     ActivityFlow,
     Collection,
     WasInformedBy,
-    HadStep
+    HadStep,
+    Parameter,
+    ParameterDescription
 )
 
 # Define custom CharField to add attribute custom_field_name
@@ -224,6 +226,20 @@ class WasInformedBySerializer(NonNullCustomSerializer):
         fields = '__all__'
 
 
+class ParameterSerializer(NonNullCustomSerializer):
+
+    class Meta:
+        model = Parameter
+        fields = '__all__'
+
+
+class ParameterDescriptionSerializer(NonNullCustomSerializer):
+
+    class Meta:
+        model = ParameterDescription
+        fields = '__all__'
+
+
 class W3CHadStepSerializer(NonNullCustomSerializer):
     prov_influencee = CustomCharField(source='activityFlow_id', custom_field_name='prov:influencee')
     prov_influencer = CustomCharField(source='activity_id', custom_field_name='prov:influencer')
@@ -252,6 +268,34 @@ class W3CCollectionSerializer(EntitySerializer):
     class Meta:
         model = Collection
         fields = ('prov_id', 'prov_label', 'prov_type', 'prov_description', 'voprov_rights', 'custom_datatype', 'custom_storageLocation')
+
+
+class W3CParameterSerializer(EntitySerializer):
+    prov_value = CustomCharField(source='value', custom_field_name='prov:value')
+    prov_label = CustomCharField(source='description.name', custom_field_name='prov:label')
+    prov_description = CustomCharField(source='description.annotation', custom_field_name='prov:description')
+    voprov_votype = CustomSerializerMethodField(custom_field_name='voprov:votype')
+    voprov_activity = CustomCharField(source='activity.id', custom_field_name='voprov:activity')
+    voprov_datatype = CustomCharField(source='description.datatype', custom_field_name='voprov:datatype')
+    voprov_xtype = CustomCharField(source='description.xtype', custom_field_name='voprov:xtype')
+    voprov_unit = CustomCharField(source='description.unit', custom_field_name='voprov:unit')
+    voprov_ucd = CustomCharField(source='description.ucd', custom_field_name='voprov:ucd')
+    voprov_utype = CustomCharField(source='description.utype', custom_field_name='voprov:utype')
+    voprov_arraysize = CustomCharField(source='description.arraysize', custom_field_name='voprov:arraysize')
+    voprov_minval = CustomCharField(source='description.minval', custom_field_name='voprov:minval')
+    voprov_maxval = CustomCharField(source='description.maxval', custom_field_name='voprov:maxval')
+    voprov_options = CustomCharField(source='description.options', custom_field_name='voprov:options')
+
+    def get_voprov_votype(self, obj):
+        return 'voprov:parameter'
+
+    class Meta:
+        model = Parameter
+        fields = ('prov_id', 'prov_value', 'prov_label', 'prov_description', 'voprov_votype',
+                  'voprov_activity', 'voprov_datatype', 'voprov_xtype',
+                  'voprov_unit', 'voprov_ucd', 'voprov_utype', 'voprov_arraysize',
+                  'voprov_minval', 'voprov_maxval', 'voprov_options'
+                  )
 
 
 class W3CProvenanceSerializer(serializers.Serializer):
@@ -300,6 +344,12 @@ class W3CProvenanceSerializer(serializers.Serializer):
             data = W3CCollectionSerializer(e).data
             entity[e_id] = data
 
+        # and add parameters
+        for e_id, e in obj['parameter'].iteritems():
+            data = W3CParameterSerializer(e).data
+            entity[e_id] = data
+
+
         return entity
 
     def get_agent(self, obj):
@@ -314,7 +364,7 @@ class W3CProvenanceSerializer(serializers.Serializer):
         used = {}
         for u_id, u in obj['used'].iteritems():
             data = UsedSerializer(u).data
-            u_id = self.add_relationnamespace(u_id)
+            u_id = self.add_namespace_to_id(u_id)
             used[u_id] = self.restructure_relations(data)
 
         return used
@@ -323,7 +373,7 @@ class W3CProvenanceSerializer(serializers.Serializer):
         wasGeneratedBy = {}
         for w_id, w in obj['wasGeneratedBy'].iteritems():
             data = WasGeneratedBySerializer(w).data
-            w_id = self.add_relationnamespace(w_id)
+            w_id = self.add_namespace_to_id(w_id)
             wasGeneratedBy[w_id] = self.restructure_relations(data)
 
         return wasGeneratedBy
@@ -332,7 +382,7 @@ class W3CProvenanceSerializer(serializers.Serializer):
         wasAssociatedWith = {}
         for w_id, w in obj['wasAssociatedWith'].iteritems():
             data = WasAssociatedWithSerializer(w).data
-            w_id = self.add_relationnamespace(w_id)
+            w_id = self.add_namespace_to_id(w_id)
             wasAssociatedWith[w_id] = self.restructure_relations(data)
 
         return wasAssociatedWith
@@ -341,7 +391,7 @@ class W3CProvenanceSerializer(serializers.Serializer):
         wasAttributedTo = {}
         for w_id, w in obj['wasAttributedTo'].iteritems():
             data = WasAttributedToSerializer(w).data
-            w_id = self.add_relationnamespace(w_id)
+            w_id = self.add_namespace_to_id(w_id)
             wasAttributedTo[w_id] = self.restructure_relations(data)
 
         return wasAttributedTo
@@ -350,7 +400,7 @@ class W3CProvenanceSerializer(serializers.Serializer):
         hadMember = {}
         for h_id, h in obj['hadMember'].iteritems():
             data = HadMemberSerializer(h).data
-            h_id = self.add_relationnamespace(h_id)
+            h_id = self.add_namespace_to_id(h_id)
             hadMember[h_id] = self.restructure_relations(data)
 
         return hadMember
@@ -359,7 +409,7 @@ class W3CProvenanceSerializer(serializers.Serializer):
         wasDerivedFrom = {}
         for w_id, w in obj['wasDerivedFrom'].iteritems():
             data = WasDerivedFromSerializer(w).data
-            w_id = self.add_relationnamespace(w_id)
+            w_id = self.add_namespace_to_id(w_id)
             wasDerivedFrom[w_id] = self.restructure_relations(data)
 
         return wasDerivedFrom
@@ -368,7 +418,7 @@ class W3CProvenanceSerializer(serializers.Serializer):
         wasInformedBy = {}
         for w_id, w in obj['wasInformedBy'].iteritems():
             data = WasInformedBySerializer(w).data
-            w_id = self.add_relationnamespace(w_id)
+            w_id = self.add_namespace_to_id(w_id)
             wasInformedBy[w_id] = self.restructure_relations(data)
 
         return wasInformedBy
@@ -378,7 +428,7 @@ class W3CProvenanceSerializer(serializers.Serializer):
         # go through all hadStep relations
         for w_id, w in obj['hadStep'].iteritems():
             data = W3CHadStepSerializer(w).data
-            w_id = self.add_relationnamespace(w_id)
+            w_id = self.add_namespace_to_id(w_id)
             wasInfluencedBy[w_id] = self.restructure_relations(data)
 
         return wasInfluencedBy
@@ -405,9 +455,10 @@ class W3CProvenanceSerializer(serializers.Serializer):
 
         return data
 
-    def add_relationnamespace(self, objectId):
-        # Add blank namespace '_' to relation ids, if there is no namespace yet,
-        # because in W3C ids must be qualified strings; will be needed for json format
+    def add_namespace_to_id(self, objectId):
+        # Add blank namespace '_' to those ids with no namespace yet,
+        # because in W3C ids must be qualified strings; will be needed for json format.
+        # Used with relation classes
         ns = "_"
         if ":" not in str(objectId):
             objectId = ns + ":" + str(objectId)
@@ -498,6 +549,20 @@ class VOAgentSerializer(NonNullCustomSerializer):
         fields = ('voprov_id', 'voprov_name', 'voprov_type', 'voprov_email', 'voprov_address', 'custom_annotation')
 
 
+class VOParameterSerializer(NonNullCustomSerializer):
+
+    class Meta:
+        model = Parameter
+        fields = '__all__'
+
+
+class VOParameterDescriptionSerializer(NonNullCustomSerializer):
+
+    class Meta:
+        model = ParameterDescription
+        fields = '__all__'
+
+
 class VOUsedSerializer(NonNullCustomSerializer):
 
     class Meta:
@@ -568,6 +633,8 @@ class VOProvenanceSerializer(serializers.Serializer):
     wasInformedBy = serializers.SerializerMethodField()
     hadStep = serializers.SerializerMethodField()
     activityFlow = serializers.SerializerMethodField()
+    parameter = serializers.SerializerMethodField()
+    parameterDescription = serializers.SerializerMethodField()
     prefix = serializers.SerializerMethodField()
 
     def get_prefix(self, obj):
@@ -617,11 +684,25 @@ class VOProvenanceSerializer(serializers.Serializer):
 
         return agent
 
+    def get_parameter(self, obj):
+        parameter = {}
+        for p_id, p in obj['parameter'].iteritems():
+            data = VOParameterSerializer(p).data
+            parameter[p_id] = data
+        return parameter
+
+    def get_parameterDescription(self, obj):
+        parameterDescription = {}
+        for p_id, p in obj['parameterDescription'].iteritems():
+            data = VOParameterDescriptionSerializer(p).data
+            parameterDescription[p_id] = data
+        return parameterDescription
+
     def get_used(self, obj):
         used = {}
         for u_id, u in obj['used'].iteritems():
             data = VOUsedSerializer(u).data
-            u_id = self.add_relationnamespace(u_id)
+            u_id = self.add_namespace_to_id(u_id)
             used[u_id] = self.restructure_relations(data)
 
         return used
@@ -630,7 +711,7 @@ class VOProvenanceSerializer(serializers.Serializer):
         wasGeneratedBy = {}
         for w_id, w in obj['wasGeneratedBy'].iteritems():
             data = VOWasGeneratedBySerializer(w).data
-            w_id = self.add_relationnamespace(w_id)
+            w_id = self.add_namespace_to_id(w_id)
             wasGeneratedBy[w_id] = self.restructure_relations(data)
 
         return wasGeneratedBy
@@ -639,7 +720,7 @@ class VOProvenanceSerializer(serializers.Serializer):
         wasAssociatedWith = {}
         for w_id, w in obj['wasAssociatedWith'].iteritems():
             data = VOWasAssociatedWithSerializer(w).data
-            w_id = self.add_relationnamespace(w_id)
+            w_id = self.add_namespace_to_id(w_id)
             wasAssociatedWith[w_id] = self.restructure_relations(data)
 
         return wasAssociatedWith
@@ -648,7 +729,7 @@ class VOProvenanceSerializer(serializers.Serializer):
         wasAttributedTo = {}
         for w_id, w in obj['wasAttributedTo'].iteritems():
             data = VOWasAttributedToSerializer(w).data
-            w_id = self.add_relationnamespace(w_id)
+            w_id = self.add_namespace_to_id(w_id)
             wasAttributedTo[w_id] = self.restructure_relations(data)
 
         return wasAttributedTo
@@ -657,7 +738,7 @@ class VOProvenanceSerializer(serializers.Serializer):
         hadMember = {}
         for h_id, h in obj['hadMember'].iteritems():
             data = VOHadMemberSerializer(h).data
-            h_id = self.add_relationnamespace(h_id)
+            h_id = self.add_namespace_to_id(h_id)
             hadMember[h_id] = self.restructure_relations(data)
 
         return hadMember
@@ -666,7 +747,7 @@ class VOProvenanceSerializer(serializers.Serializer):
         wasDerivedFrom = {}
         for w_id, w in obj['wasDerivedFrom'].iteritems():
             data = VOWasDerivedFromSerializer(w).data
-            w_id = self.add_relationnamespace(w_id)
+            w_id = self.add_namespace_to_id(w_id)
             wasDerivedFrom[w_id] = self.restructure_relations(data)
 
         return wasDerivedFrom
@@ -675,7 +756,7 @@ class VOProvenanceSerializer(serializers.Serializer):
         hadStep = {}
         for h_id, h in obj['hadStep'].iteritems():
             data = VOHadStepSerializer(h).data
-            h_id = self.add_relationnamespace(h_id)
+            h_id = self.add_namespace_to_id(h_id)
             hadStep[h_id] = self.restructure_relations(data)
 
         return hadStep
@@ -684,12 +765,12 @@ class VOProvenanceSerializer(serializers.Serializer):
         wasInformedBy = {}
         for w_id, w in obj['wasInformedBy'].iteritems():
             data = VOWasInformedBySerializer(w).data
-            w_id = self.add_relationnamespace(w_id)
+            w_id = self.add_namespace_to_id(w_id)
             wasInformedBy[w_id] = self.restructure_relations(data)
 
         return wasInformedBy
 
-    def add_relationnamespace(self, objectId):
+    def add_namespace_to_id(self, objectId):
         # If there is no namespace yet, add the default namespace instead
         ns = "_"
         if ":" not in str(objectId):

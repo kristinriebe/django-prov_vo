@@ -42,7 +42,9 @@ from .models import (
     WasDerivedFrom,
     WasInformedBy,
     ActivityFlow,
-    Collection
+    Collection,
+    Parameter,
+    ParameterDescription
     #Bundle,
 )
 from vosi.models import VOResource_Capability, Availability, AvailabilityOption
@@ -61,7 +63,8 @@ from .serializers import (
     W3CCollectionSerializer,
     W3CProvenanceSerializer,
     VOProvenanceSerializer,
-    ProvenanceGraphSerializer
+    ProvenanceGraphSerializer,
+    ParameterSerializer
 )
 
 from .renderers import PROVNRenderer, PROVJSONRenderer
@@ -162,7 +165,9 @@ def allprov(request, format):
         'hadMember': convert_to_dict_querysets(HadMember.objects.all()),
         'wasDerivedFrom': convert_to_dict_querysets(WasDerivedFrom.objects.all()),
         'hadStep': convert_to_dict_querysets(HadStep.objects.all()),
-        'wasInformedBy': convert_to_dict_querysets(WasInformedBy.objects.all())
+        'wasInformedBy': convert_to_dict_querysets(WasInformedBy.objects.all()),
+        'parameter': convert_to_dict_querysets(Parameter.objects.all()),
+        'parameterDescription': convert_to_dict_querysets(ParameterDescription.objects.all())
     }
 
     # serialize it (W3C):
@@ -415,9 +420,11 @@ def provdal(request):
         'wasAttributedTo': {},
         'hadMember': {},
         'wasDerivedFrom': {},
+        'wasInfluencedBy': {},
         'hadStep': {},
         'wasInformedBy': {},
-        'wasInfluencedBy': {}
+        'parameter': {},
+        'parameterDescription': {}
     }
 
     # Note: even if collection class is used, Entity.objects.all() still contains all entities
