@@ -170,7 +170,7 @@ def track_entity(entity, prov, countdown, direction='BACK', members_flag=False, 
                 prov['used'][u.id] = u
 
             # add activity to prov, if not yet done
-            activity_type = get_activity_type(wg.activity.id)
+            activity_type = get_activity_type(u.activity.id)
             if u.activity.id not in prov[activity_type]:
                 prov[activity_type][u.activity.id] = u.activity
 
@@ -265,6 +265,7 @@ def track_activity(activity, prov, countdown, direction='BACK', members_flag=Fal
         prov['parameter'][p.id] = p
         prov['parameterDescription'][p.description.id] = p.description
 
+
     # First check the 'shortcut' relationship 'wasInformedBy',
     # so I get the potentially farthest path first and do not
     # need to follow paths of already visited edges.
@@ -332,7 +333,7 @@ def track_activity(activity, prov, countdown, direction='BACK', members_flag=Fal
             if wg.entity.id not in prov['entity']:
                 prov['entity'][wg.entity.id] = wg.entity
 
-                # follow activity further (but only, if not visited before)
+                # follow entity further (but only, if not visited before)
                 prov = track_entity(wg.entity, prov, countdown,
                     direction=direction,
                     members_flag=members_flag,
