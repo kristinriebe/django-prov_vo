@@ -550,17 +550,36 @@ class VOAgentSerializer(NonNullCustomSerializer):
 
 
 class VOParameterSerializer(NonNullCustomSerializer):
+    voprov_id = CustomCharField(source='id', custom_field_name='voprov:id')
+    voprov_activity = CustomCharField(source='activity.id', custom_field_name='voprov:activity')
+    voprov_value = CustomCharField(source='value', custom_field_name='voprov:value')
+    voprov_description = CustomCharField(source='description', custom_field_name='voprov:description')
 
     class Meta:
         model = Parameter
-        fields = '__all__'
+        fields = ('voprov_id', 'voprov_activity', 'voprov_value', 'voprov_description')
 
 
 class VOParameterDescriptionSerializer(NonNullCustomSerializer):
+    voprov_id = CustomCharField(source='id', custom_field_name='voprov:id')
+    voprov_name = CustomCharField(source='name', custom_field_name='voprov:name')
+    voprov_annotation = CustomCharField(source='annotation', custom_field_name='voprov:annotation')
+    # TODO: should datatype be mandatory?
+    voprov_datatype = CustomCharField(source='datatype', custom_field_name='voprov:datatype')
+    voprov_xtype = CustomCharField(source='xtype', custom_field_name='voprov:xtype')
+    voprov_unit = CustomCharField(source='unit', custom_field_name='voprov:unit')
+    voprov_ucd = CustomCharField(source='ucd', custom_field_name='voprov:ucd')
+    voprov_utype = CustomCharField(source='utype', custom_field_name='voprov:utype')
+    voprov_arraysize = CustomCharField(source='arraysize', custom_field_name='voprov:arraysize')
+    voprov_minval = CustomCharField(source='minval', custom_field_name='voprov:minval')
+    voprov_maxval = CustomCharField(source='maxval', custom_field_name='voprov:maxval')
+    voprov_options = CustomCharField(source='options', custom_field_name='voprov:options')
 
     class Meta:
         model = ParameterDescription
-        fields = '__all__'
+        fields = ('voprov_id', 'voprov_name', 'voprov_annotation', 'voprov_datatype',
+            'voprov_xtype', 'voprov_unit', 'voprov_ucd', 'voprov_utype',
+            'voprov_arraysize', 'voprov_minval', 'voprov_maxval', 'voprov_options')
 
 
 class VOUsedSerializer(NonNullCustomSerializer):
@@ -648,6 +667,7 @@ class VOProvenanceSerializer(serializers.Serializer):
         for a_id, a in obj['activity'].iteritems():
             data = VOActivitySerializer(a).data
             activity[a_id] = data
+            #print 'act_id: ', activity[a_id]
 
         return activity
 
@@ -658,7 +678,6 @@ class VOProvenanceSerializer(serializers.Serializer):
             activityFlow[a_id] = data
 
         return activityFlow
-
 
     def get_entity(self, obj):
         entity = {}
@@ -689,6 +708,7 @@ class VOProvenanceSerializer(serializers.Serializer):
         for p_id, p in obj['parameter'].iteritems():
             data = VOParameterSerializer(p).data
             parameter[p_id] = data
+            #print 'param_id: ', parameter[p_id]
         return parameter
 
     def get_parameterDescription(self, obj):
@@ -696,6 +716,7 @@ class VOProvenanceSerializer(serializers.Serializer):
         for p_id, p in obj['parameterDescription'].iteritems():
             data = VOParameterDescriptionSerializer(p).data
             parameterDescription[p_id] = data
+            #print 'paramdesc: ', data
         return parameterDescription
 
     def get_used(self, obj):

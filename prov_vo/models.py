@@ -128,6 +128,7 @@ class Parameter(models.Model):
 class ParameterDescription(models.Model):
     id = models.CharField(primary_key=True, max_length=128)
     name = models.CharField(max_length=128, null=True, blank=True)
+    # activityDescription = models.ForeignKey(ActivityDescription, null=True)
     annotation = models.CharField(max_length=512, null=True, blank=True)
     # TODO: should datatype be mandatory?
     datatype = models.CharField(max_length=128, null=True, blank=True, choices=DATATYPE_CHOICES)

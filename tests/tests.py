@@ -13,20 +13,9 @@ from django.test.utils import setup_test_environment
 from prov_vo.models import Activity, ActivityFlow, HadStep
 from prov_vo.models import Entity, Collection, WasGeneratedBy, Used, WasDerivedFrom, WasInformedBy, HadMember
 from prov_vo.models import Agent, WasAssociatedWith, WasAttributedTo
+from prov_vo.models import Parameter, ParameterDescription
 from prov_vo.forms import ProvDalForm
 
-# Run all tests:
-#   python manage.py test prov_vo
-# or:
-#   python manage.py test --settings=provenance.test_settings --nomigrations prov_vo
-#
-# or for using coverage:
-#   coverage run --source=prov_vo manage.py test --settings=provenance.test_settings --nomigrations prov_vo
-#   coverage report
-#
-# Run individual tests using:
-#   python manage.py test --settings=provenance.test_settings --nomigrations prov_vo.tests.Activity_TestCase
-# or similar
 
 def get_content(response):
     content = re.sub(r'document.*\n', '', response.content)
@@ -47,6 +36,7 @@ class Activity_TestCase(TestCase):
     def test_getActivity(self):
         qset = Activity.objects.get(id="rave:myid")
         self.assertEqual(qset.name, "mylabel")
+
 
 class ActivityFlow_TestCase(TestCase):
 
@@ -366,6 +356,7 @@ agent(org:rave, [voprov:name="RAVE project"])
         # thus both, activityFlow and activity must be returned
         client = Client()
         response = client.get(reverse('prov_vo:provdal')+'?ID=rave:flow&DEPTH=3&STEPS=true&RESPONSEFORMAT=PROV-N&MODEL=W3C')
+        #print 'content: ', response.content
         self.assertEqual(response.status_code, 200)
         found = re.findall(r"^act.*", response.content, flags=re.MULTILINE)
         self.assertEqual(len(found), 2)
@@ -431,6 +422,86 @@ agent(org:rave, [voprov:name="RAVE project"])
 wasGeneratedBy(rave:dr4, rave:act, -)
 wasAssociatedWith(rave:act, org:rave, -)
 hadStep(rave:flow, rave:act)
+"""
+        self.assertEqual(content, expected)
+
+
+class ProvDAL_Generation_TestCase(TestCase):
+
+    def setUp(self):
+        a = Activity.objects.create(id="rave:act", name="myactivity")
+        a.save()
+        af = ActivityFlow.objects.create(id="rave:flow", name="myflow")
+        af.save()
+        h = HadStep.objects.create(activityFlow=af, activity=a)
+        h.save()
+
+        e = Entity.objects.create(id="rave:dr4", name="RAVE DR4")
+        e.save()
+
+        wg = WasGeneratedBy.objects.create(entity=e, activity=a)
+        wg.save()
+
+    def test_getProvdalBackGeneration(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=1&RESPONSEFORMAT=PROV-N')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""activity(rave:act, -, -, [voprov:name="myactivity"])
+entity(rave:dr4, [voprov:name="RAVE DR4"])
+wasGeneratedBy(rave:dr4, rave:act, -)
+"""
+        self.assertEqual(content, expected)
+
+    def test_getProvdalForthGeneration(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:act&DEPTH=1&DIRECTION=FORTH&RESPONSEFORMAT=PROV-N')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""activity(rave:act, -, -, [voprov:name="myactivity"])
+activityFlow(rave:flow, -, -, [voprov:name="myflow"])
+entity(rave:dr4, [voprov:name="RAVE DR4"])
+wasGeneratedBy(rave:dr4, rave:act, -)
+hadStep(rave:flow, rave:act)
+"""
+        self.assertEqual(content, expected)
+
+
+class ProvDAL_Usage_TestCase(TestCase):
+
+    def setUp(self):
+        a = Activity.objects.create(id="rave:act", name="myactivity")
+        a.save()
+
+        e = Entity.objects.create(id="rave:dr4", name="RAVE DR4")
+        e.save()
+
+        u = Used.objects.create(activity=a, entity=e)
+        u.save()
+
+    def test_getProvdalBackUsage(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:act&DEPTH=1&RESPONSEFORMAT=PROV-N')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""activity(rave:act, -, -, [voprov:name="myactivity"])
+entity(rave:dr4, [voprov:name="RAVE DR4"])
+used(rave:act, rave:dr4, -)
+"""
+        self.assertEqual(content, expected)
+
+    def test_getProvdalForthUsage(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=1&DIRECTION=FORTH&RESPONSEFORMAT=PROV-N')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""activity(rave:act, -, -, [voprov:name="myactivity"])
+entity(rave:dr4, [voprov:name="RAVE DR4"])
+used(rave:act, rave:dr4, -)
 """
         self.assertEqual(content, expected)
 
@@ -543,6 +614,54 @@ class ProvDAL_Membership_TestCase(TestCase):
         self.assertEqual(len(found), 2)
 
 
+class ProvDAL_Parameter_TestCase(TestCase):
+
+    def setUp(self):
+        a = Activity.objects.create(id="ex:act", name="myactivity")
+        a.save()
+        pd = ParameterDescription.objects.create(id="ex:paramdesc1", name="Parameter1", unit="sec", datatype="float")
+        pd.save()
+        p = Parameter.objects.create(id="ex:param1", activity=a, value="1.0", description=pd)
+        p.save()
+
+    def test_getProvdalParameterProvN(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:act&DEPTH=1&RESPONSEFORMAT=PROV-N&MODEL=IVOA')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""activity(ex:act, -, -, [voprov:name="myactivity"])
+parameter(ex:param1, ex:act, 1.0, [voprov:description="ex:paramdesc1"])
+parameterDescription(ex:paramdesc1, Parameter1, [voprov:datatype="float", voprov:unit="sec"])
+"""
+        self.assertEqual(content, expected)
+
+    def test_getProvdalParameterProvJSON(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:act&DEPTH=1&RESPONSEFORMAT=PROV-JSON&MODEL=IVOA')
+        self.assertEqual(response.status_code, 200)
+        content = json.loads(response.content)
+        self.assertEqual(content['activity'],
+            {'ex:act': {'voprov:id': 'ex:act', 'voprov:name': 'myactivity'}})
+        self.assertEqual(content['parameter'],
+            {'ex:param1': {'voprov:activity': 'ex:act', 'voprov:description': 'ex:paramdesc1' , 'voprov:id': 'ex:param1', 'voprov:value': '1.0'}
+            })
+        self.assertEqual(content['parameterDescription'],
+            {u'ex:paramdesc1': {u'voprov:id': u'ex:paramdesc1', u'voprov:unit': u'sec',
+            u'voprov:name': u'Parameter1', u'voprov:datatype': u'float'}}
+            )
+    def test_getProvdalParameterProvNW3C(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:act&DEPTH=1&RESPONSEFORMAT=PROV-N&MODEL=W3C')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""activity(ex:act, -, -, [prov:label="myactivity"])
+entity(ex:param1, [prov:value="1.0", prov:label="Parameter1", voprov:votype="voprov:parameter", voprov:activity="ex:act", voprov:datatype="float", voprov:unit="sec"])
+"""
+        self.assertEqual(content, expected)
+
+
 class ProvDAL_Graph_TestCase(TestCase):
 
     def setUp(self):
@@ -653,11 +772,7 @@ entity(ex:ent1, [prov:label="Entity 1"])
         response = client.get(reverse('prov_vo:allprov', kwargs={'format':'PROV-JSON'}))
         self.assertEqual(response.status_code, 200)
         content = json.loads(response.content)
-        expected = \
-"""activity(ex:act1, -, -, [prov:label="Activity 1"])
-activity(ex:act2, -, -, [prov:label="Activity 2"])
-entity(ex:ent1, [prov:label="Entity 1"])
-"""
+
         self.assertEqual(content['activity'],
             {'ex:act1': {'prov:id': 'ex:act1', 'prov:label': 'Activity 1'},
              'ex:act2': {'prov:id': 'ex:act2', 'prov:label': 'Activity 2'}

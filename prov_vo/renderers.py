@@ -89,6 +89,7 @@ class ActivityPROVNRenderer(PROVNBaseRenderer):
 
         return string
 
+
 class ActivityFlowPROVNRenderer(PROVNBaseRenderer):
 
     def render(self, activityFlow):
@@ -117,6 +118,36 @@ class AgentPROVNRenderer(PROVNBaseRenderer):
     def render(self, agent):
         string = "agent(" + self.get_value(agent, "id") + ")"
         string = self.add_optional_attributes(string, agent)
+
+        return string
+
+
+class ParameterPROVNRenderer(PROVNBaseRenderer):
+
+    def render(self, parameter):
+        string = "parameter("
+        string += self.get_value(parameter, "id") + ", "
+        string += self.get_value(parameter, "activity") + ", "
+        string += self.get_value(parameter, "value")
+        string += ")"
+
+
+        # add all other optional attributes in []
+        string = self.add_optional_attributes(string, parameter)
+
+        return string
+
+
+class ParameterDescriptionPROVNRenderer(PROVNBaseRenderer):
+
+    def render(self, parameterDescription):
+        string = "parameterDescription("
+        string += self.get_value(parameterDescription, "id") + ", "
+        string += self.get_value(parameterDescription, "name")
+        string += ")"
+
+        # add all other optional attributes in []
+        string = self.add_optional_attributes(string, parameterDescription)
 
         return string
 
@@ -268,6 +299,7 @@ class WasInformedByPROVNRenderer(PROVNBaseRenderer):
 
         return string
 
+
 class WasInfluencedByPROVNRenderer(PROVNBaseRenderer):
 
     def render(self, wasInfluencedBy):
@@ -283,6 +315,7 @@ class WasInfluencedByPROVNRenderer(PROVNBaseRenderer):
         string = self.add_optional_attributes(string, wasInfluencedBy)
 
         return string
+
 
 class PROVNRenderer(PROVNBaseRenderer):
     """
@@ -303,6 +336,14 @@ class PROVNRenderer(PROVNBaseRenderer):
         if 'activityFlow' in data:
             for a_id, a in data['activityFlow'].iteritems():
                 string += ActivityFlowPROVNRenderer().render(a) + "\n"
+
+        if 'parameter' in data:
+            for p_id, p in data['parameter'].iteritems():
+                string += ParameterPROVNRenderer().render(p) + "\n"
+
+        if 'parameterDescription' in data:
+            for h_id, h in data['parameterDescription'].iteritems():
+                string += ParameterDescriptionPROVNRenderer().render(h) + "\n"
 
         for e_id, e in data['entity'].iteritems():
             string += EntityPROVNRenderer().render(e) + "\n"
