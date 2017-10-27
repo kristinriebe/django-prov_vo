@@ -129,7 +129,7 @@ class ActivitySerializer(NonNullCustomSerializer):
     prov_startTime = CustomDateTimeField(source='startTime', custom_field_name='prov:startTime')
     prov_endTime = CustomDateTimeField(source='endTime', custom_field_name='prov:endTime')
     voprov_doculink = CustomCharField(source='doculink', custom_field_name='voprov:doculink')
-    voprov_description = CustomCharField(source='description.id', custom_field_name='voprov:description')
+    voprov_description = CustomCharField(source='description', custom_field_name='voprov:description')
 
     class Meta:
         model = Activity
@@ -166,7 +166,7 @@ class EntitySerializer(NonNullCustomSerializer):
     prov_type = CustomCharField(source='type', custom_field_name='prov:type')
     prov_description = CustomCharField(source='annotation', custom_field_name='prov:description')
     voprov_rights = CustomCharField(source='rights', custom_field_name='voprov:rights')
-    voprov_description = CustomCharField(source='description.id', custom_field_name='voprov:description')
+    voprov_description = CustomCharField(source='description', custom_field_name='voprov:description')
     custom_datatype = CustomCharField(source='datatype', custom_field_name='custom:datatype')
     custom_storageLocation = CustomCharField(source='storageLocation', custom_field_name='custom:storageLocation')
 
@@ -550,7 +550,7 @@ class VOActivitySerializer(NonNullCustomSerializer):
     voprov_startTime = CustomDateTimeField(source='startTime', custom_field_name='voprov:startTime')
     voprov_endTime = CustomDateTimeField(source='endTime', custom_field_name='voprov:endTime')
     voprov_doculink = CustomCharField(source='doculink', custom_field_name='voprov:doculink')
-    voprov_description = CustomCharField(source='description.id', custom_field_name='voprov:description')
+    voprov_description = CustomCharField(source='description', custom_field_name='voprov:description')
 
     class Meta:
         model = Activity
@@ -590,7 +590,7 @@ class VOEntitySerializer(NonNullCustomSerializer):
     voprov_type = CustomCharField(source='type', custom_field_name='voprov:type')
     voprov_annotation = CustomCharField(source='annotation', custom_field_name='voprov:annotation')
     voprov_rights = CustomCharField(source='rights', custom_field_name='voprov:rights')
-    voprov_description = CustomCharField(source='description.id', custom_field_name='voprov:description')
+    voprov_description = CustomCharField(source='description', custom_field_name='voprov:description')
     custom_datatype = CustomCharField(source='datatype', custom_field_name='custom:datatype')
     custom_storageLocation = CustomCharField(source='storageLocation', custom_field_name='custom:storageLocation')
 
@@ -642,7 +642,7 @@ class VOParameterSerializer(NonNullCustomSerializer):
     voprov_id = CustomCharField(source='id', custom_field_name='voprov:id')
     voprov_activity = CustomCharField(source='activity.id', custom_field_name='voprov:activity')
     voprov_value = CustomCharField(source='value', custom_field_name='voprov:value')
-    voprov_description = CustomCharField(source='description.id', custom_field_name='voprov:description')
+    voprov_description = CustomCharField(source='description', custom_field_name='voprov:description')
 
     class Meta:
         model = Parameter

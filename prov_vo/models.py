@@ -67,7 +67,7 @@ class Activity(models.Model):
     description = models.ForeignKey("ActivityDescription", null=True)
 
     def __str__(self):
-        return self.name
+        return self.id
 
 @python_2_unicode_compatible
 class ActivityDescription(models.Model):
@@ -81,7 +81,7 @@ class ActivityDescription(models.Model):
     version = models.CharField(max_length=128, blank=True, null=True)
 
     def __str__(self):
-        return self.name
+        return self.id
 
 @python_2_unicode_compatible
 class Entity(models.Model):
@@ -99,7 +99,7 @@ class Entity(models.Model):
 #    # may be use obscore_access_url here? But this is not the same as directory path on a server ...
 
     def __str__(self):
-        return self.name
+        return self.id
 
 @python_2_unicode_compatible
 class EntityDescription(models.Model):
@@ -110,7 +110,7 @@ class EntityDescription(models.Model):
     doculink = models.CharField('documentation link', max_length=512, blank=True, null=True)
 
     def __str__(self):
-        return self.name
+        return self.id
 
 @python_2_unicode_compatible
 class Agent(models.Model):
@@ -124,7 +124,7 @@ class Agent(models.Model):
     annotation = models.CharField(max_length=1024, null=True, blank=True)
 
     def __str__(self):
-        return self.name
+        return self.id
 
 
 # collection classes
@@ -132,13 +132,13 @@ class Agent(models.Model):
 class ActivityFlow(Activity):
 
     def __str__(self):
-        return self.name
+        return self.id
 
 @python_2_unicode_compatible
 class Collection(Entity):
 
     def __str__(self):
-        return self.name
+        return self.id
 
 
 # parameter classes
