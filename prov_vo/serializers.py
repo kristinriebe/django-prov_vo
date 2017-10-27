@@ -21,7 +21,9 @@ from .models import (
     WasInformedBy,
     HadStep,
     Parameter,
-    ParameterDescription
+    ParameterDescription,
+    ActivityDescription,
+    EntityDescription
 )
 
 # Define custom CharField to add attribute custom_field_name
@@ -117,7 +119,7 @@ class NonNullCustomSerializer(serializers.ModelSerializer):
 
         return ret
 
-
+# W3C compatible serializer classes
 class ActivitySerializer(NonNullCustomSerializer):
 
     prov_id = CustomCharField(source='id', custom_field_name='prov:id')
@@ -127,12 +129,34 @@ class ActivitySerializer(NonNullCustomSerializer):
     prov_startTime = CustomDateTimeField(source='startTime', custom_field_name='prov:startTime')
     prov_endTime = CustomDateTimeField(source='endTime', custom_field_name='prov:endTime')
     voprov_doculink = CustomCharField(source='doculink', custom_field_name='voprov:doculink')
+    voprov_description = CustomCharField(source='description.id', custom_field_name='voprov:description')
 
     class Meta:
         model = Activity
-        fields = ('prov_id', 'prov_label', 'prov_type', 'prov_description', 'prov_startTime', 'prov_endTime', 'voprov_doculink')
+        fields = ('prov_id', 'prov_label', 'prov_type', 'prov_description', 'prov_startTime', 'prov_endTime', 'voprov_doculink', 'voprov_description')
         # exclude id later on, when it will be used as key in the dictionary anyway
         # but still keep it here in the serializer
+
+
+class W3CActivityDescriptionSerializer(NonNullCustomSerializer):
+
+    prov_id = CustomCharField(source='id', custom_field_name='prov:id')
+    prov_label = CustomCharField(source='name', custom_field_name='prov:label')
+    prov_type = CustomCharField(source='type', custom_field_name='prov:type')
+    voprov_subtype = CustomCharField(source='subtype', custom_field_name='voprov:subtype')
+    prov_description = CustomCharField(source='annotation', custom_field_name='prov:description')
+    voprov_doculink = CustomCharField(source='doculink', custom_field_name='voprov:doculink')
+    voprov_code = CustomCharField(source='code', custom_field_name='voprov:code')
+    voprov_version = CustomCharField(source='version', custom_field_name='voprov:version')
+    voprov_votype = CustomSerializerMethodField(custom_field_name='voprov:votype')
+
+    def get_voprov_votype(self, obj):
+        return 'voprov:activityDescription'
+
+    class Meta:
+        model = ActivityDescription
+        fields = ('prov_id', 'prov_label', 'voprov_votype', 'prov_type', 'voprov_subtype',
+            'prov_description', 'voprov_doculink', 'voprov_code', 'voprov_version')
 
 
 class EntitySerializer(NonNullCustomSerializer):
@@ -142,12 +166,30 @@ class EntitySerializer(NonNullCustomSerializer):
     prov_type = CustomCharField(source='type', custom_field_name='prov:type')
     prov_description = CustomCharField(source='annotation', custom_field_name='prov:description')
     voprov_rights = CustomCharField(source='rights', custom_field_name='voprov:rights')
+    voprov_description = CustomCharField(source='description.id', custom_field_name='voprov:description')
     custom_datatype = CustomCharField(source='datatype', custom_field_name='custom:datatype')
     custom_storageLocation = CustomCharField(source='storageLocation', custom_field_name='custom:storageLocation')
 
     class Meta:
         model = Entity
-        fields = ('prov_id', 'prov_label', 'prov_type', 'prov_description', 'voprov_rights', 'custom_datatype', 'custom_storageLocation')
+        fields = ('prov_id', 'prov_label', 'prov_type', 'prov_description', 'voprov_rights', 'voprov_description', 'custom_datatype', 'custom_storageLocation')
+
+
+class W3CEntityDescriptionSerializer(NonNullCustomSerializer):
+
+    prov_id = CustomCharField(source='id', custom_field_name='prov:id')
+    prov_label = CustomCharField(source='name', custom_field_name='prov:label')
+    prov_description = CustomCharField(source='annotation', custom_field_name='prov:description')
+    voprov_category = CustomCharField(source='category', custom_field_name='voprov:category')
+    voprov_doculink = CustomCharField(source='doculink', custom_field_name='voprov:doculink')
+    voprov_votype = CustomSerializerMethodField(custom_field_name='voprov:votype')
+
+    def get_voprov_votype(self, obj):
+        return 'voprov:entityDescription'
+
+    class Meta:
+        model = EntityDescription
+        fields = ('prov_id', 'prov_label', 'voprov_votype', 'prov_description', 'voprov_category', 'voprov_doculink')
 
 
 class AgentSerializer(NonNullCustomSerializer):
@@ -260,14 +302,14 @@ class W3CActivityFlowSerializer(ActivitySerializer):
 
     class Meta:
         model = ActivityFlow
-        fields = ('prov_id', 'prov_label', 'prov_type', 'prov_description', 'prov_startTime', 'prov_endTime', 'voprov_votype', 'voprov_doculink')
+        fields = ('prov_id', 'prov_label', 'prov_type', 'prov_description', 'prov_startTime', 'prov_endTime', 'voprov_votype', 'voprov_doculink', 'voprov_description')
 
 
 class W3CCollectionSerializer(EntitySerializer):
 
     class Meta:
         model = Collection
-        fields = ('prov_id', 'prov_label', 'prov_type', 'prov_description', 'voprov_rights', 'custom_datatype', 'custom_storageLocation')
+        fields = ('prov_id', 'prov_label', 'prov_type', 'prov_description', 'voprov_rights', 'voprov_description', 'custom_datatype', 'custom_storageLocation')
 
 
 class W3CParameterSerializer(EntitySerializer):
@@ -349,6 +391,14 @@ class W3CProvenanceSerializer(serializers.Serializer):
             data = W3CParameterSerializer(e).data
             entity[e_id] = data
 
+        # and add descriptions
+        for e_id, e in obj['entityDescription'].iteritems():
+            data = W3CEntityDescriptionSerializer(e).data
+            entity[e_id] = data
+
+        for e_id, e in obj['activityDescription'].iteritems():
+            data = W3CActivityDescriptionSerializer(e).data
+            entity[e_id] = data
 
         return entity
 
@@ -500,17 +550,37 @@ class VOActivitySerializer(NonNullCustomSerializer):
     voprov_startTime = CustomDateTimeField(source='startTime', custom_field_name='voprov:startTime')
     voprov_endTime = CustomDateTimeField(source='endTime', custom_field_name='voprov:endTime')
     voprov_doculink = CustomCharField(source='doculink', custom_field_name='voprov:doculink')
+    voprov_description = CustomCharField(source='description.id', custom_field_name='voprov:description')
 
     class Meta:
         model = Activity
-        fields = ('voprov_id', 'voprov_name', 'voprov_type', 'voprov_annotation', 'voprov_startTime', 'voprov_endTime', 'voprov_doculink')
+        fields = ('voprov_id', 'voprov_name', 'voprov_type', 'voprov_annotation',
+            'voprov_startTime', 'voprov_endTime', 'voprov_doculink', 'voprov_description')
 
 
 class VOActivityFlowSerializer(VOActivitySerializer):
 
     class Meta:
         model = ActivityFlow
-        fields = ('voprov_id', 'voprov_name', 'voprov_type', 'voprov_annotation', 'voprov_startTime', 'voprov_endTime', 'voprov_doculink')
+        fields = ('voprov_id', 'voprov_name', 'voprov_type', 'voprov_annotation',
+            'voprov_startTime', 'voprov_endTime', 'voprov_doculink', 'voprov_description')
+
+
+class VOActivityDescriptionSerializer(NonNullCustomSerializer):
+
+    voprov_id = CustomCharField(source='id', custom_field_name='voprov:id')
+    voprov_name = CustomCharField(source='name', custom_field_name='voprov:name')
+    voprov_type = CustomCharField(source='type', custom_field_name='voprov:type')
+    voprov_subtype = CustomCharField(source='subtype', custom_field_name='voprov:subtype')
+    voprov_annotation = CustomCharField(source='annotation', custom_field_name='voprov:annotation')
+    voprov_doculink = CustomCharField(source='doculink', custom_field_name='voprov:doculink')
+    voprov_code = CustomCharField(source='code', custom_field_name='voprov:code')
+    voprov_version = CustomCharField(source='version', custom_field_name='voprov:version')
+
+    class Meta:
+        model = ActivityDescription
+        fields = ('voprov_id', 'voprov_name', 'voprov_type', 'voprov_subtype',
+            'voprov_annotation', 'voprov_doculink', 'voprov_code', 'voprov_version')
 
 
 class VOEntitySerializer(NonNullCustomSerializer):
@@ -520,19 +590,37 @@ class VOEntitySerializer(NonNullCustomSerializer):
     voprov_type = CustomCharField(source='type', custom_field_name='voprov:type')
     voprov_annotation = CustomCharField(source='annotation', custom_field_name='voprov:annotation')
     voprov_rights = CustomCharField(source='rights', custom_field_name='voprov:rights')
+    voprov_description = CustomCharField(source='description.id', custom_field_name='voprov:description')
     custom_datatype = CustomCharField(source='datatype', custom_field_name='custom:datatype')
     custom_storageLocation = CustomCharField(source='storageLocation', custom_field_name='custom:storageLocation')
 
     class Meta:
         model = Entity
-        fields = ('voprov_id', 'voprov_name', 'voprov_type', 'voprov_annotation', 'voprov_rights', 'custom_datatype', 'custom_storageLocation')
+        fields = ('voprov_id', 'voprov_name', 'voprov_type', 'voprov_annotation',
+            'voprov_rights', 'voprov_description',
+            'custom_datatype', 'custom_storageLocation')
 
 
 class VOCollectionSerializer(VOEntitySerializer):
 
     class Meta:
         model = Collection
-        fields = ('voprov_id', 'voprov_name', 'voprov_type', 'voprov_annotation', 'voprov_rights', 'custom_datatype', 'custom_storageLocation')
+        fields = ('voprov_id', 'voprov_name', 'voprov_type', 'voprov_annotation',
+            'voprov_rights', 'voprov_description', 'custom_datatype', 'custom_storageLocation')
+
+
+class VOEntityDescriptionSerializer(NonNullCustomSerializer):
+
+    voprov_id = CustomCharField(source='id', custom_field_name='voprov:id')
+    voprov_name = CustomCharField(source='name', custom_field_name='voprov:name')
+    voprov_annotation = CustomCharField(source='annotation', custom_field_name='voprov:annotation')
+    voprov_category = CustomCharField(source='category', custom_field_name='voprov:category')
+    voprov_doculink = CustomCharField(source='doculink', custom_field_name='voprov:doculink')
+
+    class Meta:
+        model = EntityDescription
+        fields = ('voprov_id', 'voprov_name', 'voprov_annotation',
+            'voprov_category', 'voprov_doculink')
 
 
 class VOAgentSerializer(NonNullCustomSerializer):
@@ -546,14 +634,15 @@ class VOAgentSerializer(NonNullCustomSerializer):
 
     class Meta:
         model = Agent
-        fields = ('voprov_id', 'voprov_name', 'voprov_type', 'voprov_email', 'voprov_address', 'custom_annotation')
+        fields = ('voprov_id', 'voprov_name', 'voprov_type', 'voprov_email',
+            'voprov_address', 'custom_annotation')
 
 
 class VOParameterSerializer(NonNullCustomSerializer):
     voprov_id = CustomCharField(source='id', custom_field_name='voprov:id')
     voprov_activity = CustomCharField(source='activity.id', custom_field_name='voprov:activity')
     voprov_value = CustomCharField(source='value', custom_field_name='voprov:value')
-    voprov_description = CustomCharField(source='description', custom_field_name='voprov:description')
+    voprov_description = CustomCharField(source='description.id', custom_field_name='voprov:description')
 
     class Meta:
         model = Parameter
@@ -654,6 +743,8 @@ class VOProvenanceSerializer(serializers.Serializer):
     activityFlow = serializers.SerializerMethodField()
     parameter = serializers.SerializerMethodField()
     parameterDescription = serializers.SerializerMethodField()
+    activityDescription = serializers.SerializerMethodField()
+    entityDescription = serializers.SerializerMethodField()
     prefix = serializers.SerializerMethodField()
 
     def get_prefix(self, obj):
@@ -679,6 +770,14 @@ class VOProvenanceSerializer(serializers.Serializer):
 
         return activityFlow
 
+    def get_activityDescription(self, obj):
+        activityDescription = {}
+        for a_id, a in obj['activityDescription'].iteritems():
+            data = VOActivityDescriptionSerializer(a).data
+            activityDescription[a_id] = data
+
+        return activityDescription
+
     def get_entity(self, obj):
         entity = {}
         for e_id, e in obj['entity'].iteritems():
@@ -694,6 +793,14 @@ class VOProvenanceSerializer(serializers.Serializer):
             collection[c_id] = data
 
         return collection
+
+    def get_entityDescription(self, obj):
+        entityDescription = {}
+        for e_id, e in obj['entityDescription'].iteritems():
+            data = VOEntityDescriptionSerializer(e).data
+            entityDescription[e_id] = data
+
+        return entityDescription
 
     def get_agent(self, obj):
         agent = {}

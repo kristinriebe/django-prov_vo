@@ -152,6 +152,34 @@ class ParameterDescriptionPROVNRenderer(PROVNBaseRenderer):
         return string
 
 
+class ActivityDescriptionPROVNRenderer(PROVNBaseRenderer):
+
+    def render(self, activityDescription):
+        string = "activityDescription("
+        string += self.get_value(activityDescription, "id") + ", "
+        string += self.get_value(activityDescription, "name")
+        string += ")"
+
+        # add all other optional attributes in []
+        string = self.add_optional_attributes(string, activityDescription)
+
+        return string
+
+
+class EntityDescriptionPROVNRenderer(PROVNBaseRenderer):
+
+    def render(self, entityDescription):
+        string = "entityDescription("
+        string += self.get_value(entityDescription, "id") + ", "
+        string += self.get_value(entityDescription, "name")
+        string += ")"
+
+        # add all other optional attributes in []
+        string = self.add_optional_attributes(string, entityDescription)
+
+        return string
+
+
 class UsedPROVNRenderer(PROVNBaseRenderer):
 
     def render(self, used):
@@ -337,6 +365,10 @@ class PROVNRenderer(PROVNBaseRenderer):
             for a_id, a in data['activityFlow'].iteritems():
                 string += ActivityFlowPROVNRenderer().render(a) + "\n"
 
+        if 'activityDescription' in data:
+            for a_id, a in data['activityDescription'].iteritems():
+                string += ActivityDescriptionPROVNRenderer().render(a) + "\n"
+
         if 'parameter' in data:
             for p_id, p in data['parameter'].iteritems():
                 string += ParameterPROVNRenderer().render(p) + "\n"
@@ -347,6 +379,10 @@ class PROVNRenderer(PROVNBaseRenderer):
 
         for e_id, e in data['entity'].iteritems():
             string += EntityPROVNRenderer().render(e) + "\n"
+
+        if 'entityDescription' in data:
+            for a_id, a in data['entityDescription'].iteritems():
+                string += EntityDescriptionPROVNRenderer().render(a) + "\n"
 
         for a_id, a in data['agent'].iteritems():
             string += AgentPROVNRenderer().render(a) + "\n"

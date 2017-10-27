@@ -44,9 +44,12 @@ from .models import (
     ActivityFlow,
     Collection,
     Parameter,
-    ParameterDescription
+    ParameterDescription,
+    ActivityDescription,
+    EntityDescription
     #Bundle,
 )
+
 from vosi.models import VOResource_Capability, Availability, AvailabilityOption
 
 from .serializers import (
@@ -167,7 +170,9 @@ def allprov(request, format):
         'hadStep': convert_to_dict_querysets(HadStep.objects.all()),
         'wasInformedBy': convert_to_dict_querysets(WasInformedBy.objects.all()),
         'parameter': convert_to_dict_querysets(Parameter.objects.all()),
-        'parameterDescription': convert_to_dict_querysets(ParameterDescription.objects.all())
+        'parameterDescription': convert_to_dict_querysets(ParameterDescription.objects.all()),
+        'activityDescription': convert_to_dict_querysets(ActivityDescription.objects.all()),
+        'entityDescription': convert_to_dict_querysets(EntityDescription.objects.all())
     }
 
     # serialize it (W3C):
@@ -284,7 +289,6 @@ def fullgraphjson(request):
     prov_dict = {"nodes": nodes_dict, "links": links_dict}
 
     return JsonResponse(prov_dict)
-
 
 
 def provdal_form(request):
@@ -424,7 +428,9 @@ def provdal(request):
         'hadStep': {},
         'wasInformedBy': {},
         'parameter': {},
-        'parameterDescription': {}
+        'parameterDescription': {},
+        'activityDescription': {},
+        'entityDescription': {}
     }
 
     # Note: even if collection class is used, Entity.objects.all() still contains all entities

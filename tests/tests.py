@@ -14,6 +14,8 @@ from prov_vo.models import Activity, ActivityFlow, HadStep
 from prov_vo.models import Entity, Collection, WasGeneratedBy, Used, WasDerivedFrom, WasInformedBy, HadMember
 from prov_vo.models import Agent, WasAssociatedWith, WasAttributedTo
 from prov_vo.models import Parameter, ParameterDescription
+from prov_vo.models import ActivityDescription, EntityDescription
+
 from prov_vo.forms import ProvDalForm
 
 
@@ -658,6 +660,90 @@ parameterDescription(ex:paramdesc1, Parameter1, [voprov:datatype="float", voprov
         expected = \
 """activity(ex:act, -, -, [prov:label="myactivity"])
 entity(ex:param1, [prov:value="1.0", prov:label="Parameter1", voprov:votype="voprov:parameter", voprov:activity="ex:act", voprov:datatype="float", voprov:unit="sec"])
+"""
+        self.assertEqual(content, expected)
+
+
+class ProvDAL_ActivityDescription_TestCase(TestCase):
+
+    def setUp(self):
+        ad = ActivityDescription.objects.create(id="ex:actdesc1", name="Activity Description 1", type="observation")
+        ad.save()
+        a = Activity.objects.create(id="ex:act1", name="Activity 1", description=ad)
+        a.save()
+
+    def test_getProvdalActivityDescriptionProvN(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:act1&DEPTH=1&RESPONSEFORMAT=PROV-N&MODEL=IVOA')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""activity(ex:act1, -, -, [voprov:name="Activity 1", voprov:description="ex:actdesc1"])
+activityDescription(ex:actdesc1, Activity Description 1, [voprov:type="observation"])
+"""
+        self.assertEqual(content, expected)
+
+    def test_getProvdalActivityDescriptionProvJSON(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:act1&DEPTH=1&RESPONSEFORMAT=PROV-JSON&MODEL=IVOA')
+        self.assertEqual(response.status_code, 200)
+        content = json.loads(response.content)
+        self.assertEqual(content['activity'],
+            {'ex:act1': {'voprov:id': 'ex:act1', 'voprov:name': 'Activity 1', 'voprov:description': 'ex:actdesc1'}})
+        self.assertEqual(content['activityDescription'],
+            {'ex:actdesc1': {'voprov:id': 'ex:actdesc1', 'voprov:name': 'Activity Description 1', 'voprov:type': 'observation'}
+            })
+
+    def test_getProvdalActivityDescriptionProvNW3C(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:act1&DEPTH=1&RESPONSEFORMAT=PROV-N&MODEL=W3C')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""activity(ex:act1, -, -, [prov:label="Activity 1", voprov:description="ex:actdesc1"])
+entity(ex:actdesc1, [prov:label="Activity Description 1", voprov:votype="voprov:activityDescription", prov:type="observation"])
+"""
+        self.assertEqual(content, expected)
+
+
+class ProvDAL_EntityDescription_TestCase(TestCase):
+
+    def setUp(self):
+        ed = EntityDescription.objects.create(id="ex:entdesc1", name="Entity Description 1", category="image")
+        ed.save()
+        e = Entity.objects.create(id="ex:ent1", name="Entity 1", description=ed)
+        e.save()
+
+    def test_getProvdalEntityDescriptionProvN(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent1&DEPTH=1&RESPONSEFORMAT=PROV-N&MODEL=IVOA')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""entity(ex:ent1, [voprov:name="Entity 1", voprov:description="ex:entdesc1"])
+entityDescription(ex:entdesc1, Entity Description 1, [voprov:category="image"])
+"""
+        self.assertEqual(content, expected)
+
+    def test_getProvdalEntityDescriptionProvJSON(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent1&DEPTH=1&RESPONSEFORMAT=PROV-JSON&MODEL=IVOA')
+        self.assertEqual(response.status_code, 200)
+        content = json.loads(response.content)
+        self.assertEqual(content['entity'],
+            {'ex:ent1': {'voprov:id': 'ex:ent1', 'voprov:name': 'Entity 1', 'voprov:description': 'ex:entdesc1'}})
+        self.assertEqual(content['entityDescription'],
+            {'ex:entdesc1': {'voprov:id': 'ex:entdesc1', 'voprov:name': 'Entity Description 1', 'voprov:category': 'image'}
+            })
+
+    def test_getProvdalEntityDescriptionProvNW3C(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent1&DEPTH=1&RESPONSEFORMAT=PROV-N&MODEL=W3C')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""entity(ex:entdesc1, [prov:label="Entity Description 1", voprov:votype="voprov:entityDescription", voprov:category="image"])
+entity(ex:ent1, [prov:label="Entity 1", voprov:description="ex:entdesc1"])
 """
         self.assertEqual(content, expected)
 

@@ -6,6 +6,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.http import JsonResponse
 import vosi.models
 
+# choice lists, they are *not* complete
 ACTIVITY_TYPE_CHOICES = (
     ('obs:Observation', 'obs:Observation'),
     ('obs:Reduction', 'obs:Reduction'),
@@ -63,6 +64,21 @@ class Activity(models.Model):
     startTime = models.DateTimeField(null=True) # should be: null=False, default=timezone.now())
     endTime = models.DateTimeField(null=True) # should be: null=False, default=timezone.now())
     doculink = models.CharField('documentation link', max_length=512, blank=True, null=True)
+    description = models.ForeignKey("ActivityDescription", null=True)
+
+    def __str__(self):
+        return self.name
+
+@python_2_unicode_compatible
+class ActivityDescription(models.Model):
+    id = models.CharField(primary_key=True, max_length=128)
+    name = models.CharField(max_length=128, null=True) # should require this, otherwise do not know what to show!
+    type = models.CharField(max_length=128, null=True, choices=ACTIVITY_TYPE_CHOICES)
+    subtype = models.CharField(max_length=128, blank=True, null=True)
+    annotation = models.CharField(max_length=1024, blank=True, null=True)
+    doculink = models.CharField('documentation link', max_length=512, blank=True, null=True)
+    code = models.CharField(max_length=128, blank=True, null=True)
+    version = models.CharField(max_length=128, blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -74,12 +90,24 @@ class Entity(models.Model):
     type = models.CharField(max_length=128, null=True, choices=ENTITY_TYPE_CHOICES) # types of entities: single entity, dataset
     annotation = models.CharField(max_length=1024, null=True, blank=True)
     rights = models.CharField(max_length=128, null=True, blank=True, choices=ENTITY_RIGHTS_CHOICES)
+    description = models.ForeignKey("EntityDescription", null=True)
 
     # non-standard attributes:
     datatype= models.CharField(max_length=128, null=True, blank=True, choices=DATATYPE_CHOICES)
 #    # maybe use obscore_access_format?
     storageLocation = models.CharField('storage location', max_length=1024, null=True, blank=True)
-#    # may be use obscore_access_url here? But this is not the same as dorectory path on a server ...
+#    # may be use obscore_access_url here? But this is not the same as directory path on a server ...
+
+    def __str__(self):
+        return self.name
+
+@python_2_unicode_compatible
+class EntityDescription(models.Model):
+    id = models.CharField(primary_key=True, max_length=128)
+    name = models.CharField(max_length=128, null=True) # human readable label
+    annotation = models.CharField(max_length=1024, null=True, blank=True)
+    category = models.CharField(max_length=128, null=True, blank=True)
+    doculink = models.CharField('documentation link', max_length=512, blank=True, null=True)
 
     def __str__(self):
         return self.name

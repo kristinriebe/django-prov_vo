@@ -95,6 +95,12 @@ def track_entity(entity, prov, countdown, direction='BACK', members_flag=False, 
     # Follow at most countdown steps backward/forward
     countdown -= 1
 
+    # add description of the current entity, if existing;
+    # independent of back/forth
+    if entity.description is not None:
+        if entity.description.id not in prov['entityDescription']:
+            prov['entityDescription'][entity.description.id] = entity.description
+
     # First go through the 'short-cut' relation 'wasDerivedFrom'
     # because thus I only need to follow those nodes via the long
     # path, that were not visited before
@@ -263,7 +269,15 @@ def track_activity(activity, prov, countdown, direction='BACK', members_flag=Fal
     queryset = Parameter.objects.filter(activity=activity.id)
     for p in queryset:
         prov['parameter'][p.id] = p
+        # if there is a parameter, a corresponding activityDescription
+        # must also exist
         prov['parameterDescription'][p.description.id] = p.description
+
+    # add description of the current activity, if existing;
+    # independent of back/forth
+    if activity.description is not None:
+        if activity.description.id not in prov['activityDescription']:
+            prov['activityDescription'][activity.description.id] = activity.description
 
 
     # First check the 'shortcut' relationship 'wasInformedBy',
