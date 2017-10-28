@@ -228,6 +228,21 @@ class ProvDAL_General_TestCase(TestCase):
         numlines = len(found)
         self.assertEqual(numlines, 0)
 
+    def test_getProvdalPrefix(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=blabla&RESPONSEFORMAT=PROV-N')
+        self.assertEqual(response.status_code, 200)
+        expected = \
+"""document
+prefix rave <http://www.rave-survey.org/prov/>
+prefix prov <http://www.w3.org/ns/prov#>
+prefix xsd <http://www.w3.org/2000/10/XMLSchema#>
+prefix voprov <http://www.ivoa.net/documents/ProvenanceDM/ns/voprov/>
+prefix custom <http://www.ivoa.net/documents/ProvenanceDM/ns/custom/>
+
+endDocument"""
+        self.assertEqual(response.content, expected)
+
     def test_get_caseinsensitive(self):
         client = Client()
         response = client.get(reverse('prov_vo:provdal')+'?id=rave:obs&RESPONSEFORMAT=PROV-N')
@@ -391,6 +406,22 @@ wasAttributedTo(rave:dr4, org:rave)
 """
         self.assertEqual(expected, content)
 
+    def test_getProvdalAgentFollowW3C(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=org:rave&AGENT=TRUE&DEPTH=1&RESPONSEFORMAT=PROV-N&MODEL=W3C')
+        self.assertEqual(response.status_code, 200)
+        # agent, activity, entity, wat and was. relation should be returned
+        # strip begin/end document and prefix from response content:
+        content = get_content(response)
+        expected = \
+"""activity(rave:act, -, -, [prov:label="myactivity"])
+entity(rave:dr4, [prov:label="RAVE DR4"])
+agent(org:rave, [prov:label="RAVE project"])
+wasAssociatedWith(rave:act, org:rave, -)
+wasAttributedTo(rave:dr4, org:rave)
+"""
+        self.assertEqual(expected, content)
+
     def test_getProvdalBack(self):
         client = Client()
         response = client.get(reverse('prov_vo:provdal')+'?ID=rave:act&DEPTH=1&RESPONSEFORMAT=PROV-N')
@@ -452,6 +483,18 @@ class ProvDAL_Generation_TestCase(TestCase):
         expected = \
 """activity(rave:act, -, -, [voprov:name="myactivity"])
 entity(rave:dr4, [voprov:name="RAVE DR4"])
+wasGeneratedBy(rave:dr4, rave:act, -)
+"""
+        self.assertEqual(content, expected)
+
+    def test_getProvdalBackGenerationW3C(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=1&RESPONSEFORMAT=PROV-N&MODEL=W3C')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""activity(rave:act, -, -, [prov:label="myactivity"])
+entity(rave:dr4, [prov:label="RAVE DR4"])
 wasGeneratedBy(rave:dr4, rave:act, -)
 """
         self.assertEqual(content, expected)
@@ -531,6 +574,18 @@ wasDerivedFrom(rave:dr4, rave:obs, -, -, -)
 """
         self.assertEqual(content, expected)
 
+    def test_getProvdalBackDerivationW3C(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=1&RESPONSEFORMAT=PROV-N&MODEL=W3C')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""entity(rave:dr4, [prov:label="RAVE DR4"])
+entity(rave:obs, [prov:label="RAVE observations"])
+wasDerivedFrom(rave:dr4, rave:obs, -, -, -)
+"""
+        self.assertEqual(content, expected)
+
     def test_getProvdalForthDerivation(self):
         client = Client()
         response = client.get(reverse('prov_vo:provdal')+'?ID=rave:obs&DEPTH=1&DIRECTION=FORTH&RESPONSEFORMAT=PROV-N')
@@ -563,6 +618,18 @@ class ProvDAL_Information_TestCase(TestCase):
         expected = \
 """activity(ex:act1, -, -, [voprov:name="Activity 1"])
 activity(ex:act2, -, -, [voprov:name="Activity 2"])
+wasInformedBy(ex:act2, ex:act1)
+"""
+        self.assertEqual(content, expected)
+
+    def test_getProvdalBackInformationW3C(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:act2&DEPTH=1&RESPONSEFORMAT=PROV-N&MODEL=W3C')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""activity(ex:act1, -, -, [prov:label="Activity 1"])
+activity(ex:act2, -, -, [prov:label="Activity 2"])
 wasInformedBy(ex:act2, ex:act1)
 """
         self.assertEqual(content, expected)
@@ -614,6 +681,19 @@ class ProvDAL_Membership_TestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         found = re.findall(r"^entity.*", response.content, flags=re.MULTILINE)
         self.assertEqual(len(found), 2)
+
+    def test_getProvdalCollectionIncludeMembersW3C(self):
+        # If MEMBERS=TRUE, members of a collection shall be followed,
+        # thus both, collection and entity must be returned
+        # (both serialized as "entity", so far)
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=1&MEMBERS=true&RESPONSEFORMAT=PROV-N&MODEL=W3C')
+        self.assertEqual(response.status_code, 200)
+        found = re.findall(r"^entity.*", response.content, flags=re.MULTILINE)
+        self.assertEqual(len(found), 2)
+        found = re.findall(r"^hadMember.*", response.content, flags=re.MULTILINE)
+        self.assertEqual(len(found), 1)
+
 
 
 class ProvDAL_Parameter_TestCase(TestCase):
@@ -770,7 +850,18 @@ class ProvDAL_Graph_TestCase(TestCase):
 
     def test_getProvdalGraphJson(self):
         client = Client()
-        url = reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=1&RESPONSEFORMAT=GRAPH-JSON'
+        url = reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=1&RESPONSEFORMAT=GRAPH-JSON&MODEL=IVOA'
+        response = client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        expected = \
+"""{"nodes": [{"type": "entity", "name": "RAVE DR4"}, {"type": "entity", "name": "RAVE observations"}],""" + \
+""" "links": [{"source": 0, "type": "wasDerivedFrom", "target": 1, "value": 0.2}]}"""
+        self.assertEqual(response.content, expected)
+
+    def test_getProvdalGraphJson(self):
+        client = Client()
+        url = reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=1&RESPONSEFORMAT=GRAPH-JSON&MODEL=W3C'
         response = client.get(url)
         self.assertEqual(response.status_code, 200)
 
@@ -830,6 +921,7 @@ class ProvDALForm_TestCase(TestCase):
         url = '/prov_vo/provdal/?ID=rave:dr4&DEPTH=1&DIRECTION=BACK&MEMBERS=FALSE&STEPS=FALSE&AGENT=FALSE&RESPONSEFORMAT=PROV-JSON&MODEL=IVOA'
         self.assertEqual(response.url, url)
 
+
 class View_Allprov_TestCase(TestCase):
     def setUp(self):
         e = Entity.objects.create(id="ex:ent1", name="Entity 1")
@@ -866,3 +958,35 @@ entity(ex:ent1, [prov:label="Entity 1"])
         self.assertEqual(content['entity'],
             {'ex:ent1': {'prov:id': 'ex:ent1', 'prov:label': 'Entity 1'}
             })
+
+    def test_allprov_provxml(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:allprov', kwargs={'format':'PROV-XML'}))
+        self.assertEqual(response.status_code, 400)
+
+
+class View_Fullgraph_TestCase(TestCase):
+    def setUp(self):
+        e = Entity.objects.create(id="ex:ent1", name="Entity 1")
+        e.save()
+
+        a1 = Activity.objects.create(id="ex:act1", name="Activity 1")
+        a1.save()
+
+        a2 = Activity.objects.create(id="ex:act2", name="Activity 2")
+        a2.save()
+
+    def test_fullgraph(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:graph'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_fullgraphjson(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:graphjson'))
+        self.assertEqual(response.status_code, 200)
+        #print 'content: ', response.content
+
+        content = json.loads(response.content)
+        expected={u'nodes': [{u'type': u'activity', u'name': u'Activity 1'}, {u'type': u'activity', u'name': u'Activity 2'}, {u'type': u'entity', u'name': u'Entity 1'}], u'links': []}
+        self.assertEqual(content, expected)

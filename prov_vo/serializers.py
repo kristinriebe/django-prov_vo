@@ -382,6 +382,7 @@ class W3CProvenanceSerializer(serializers.Serializer):
             entity[e_id] = data
 
         # add collections to entities as well
+        # -- actually not needed, since they are added as entities only in utils.track-functions
         for e_id, e in obj['collection'].iteritems():
             data = W3CCollectionSerializer(e).data
             entity[e_id] = data
@@ -534,10 +535,6 @@ class W3CProvenanceSerializer(serializers.Serializer):
                 data[newkey] = data.pop(key)
 
         return data
-
-    def get_plan_id(self, a_id):
-        p_id = "%s_plan" % a_id
-        return p_id
 
 
 # IVOA specific serializers
