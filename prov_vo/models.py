@@ -30,7 +30,7 @@ AGENT_TYPE_CHOICES = (
 ENTITY_RIGHTS_CHOICES = (
     ('voprov:public', 'voprov:public'),
     ('voprov:secure', 'voprov:secure'),
-    ('voprov:propriatary', 'voprov:proprietary')
+    ('voprov:proprietary', 'voprov:proprietary')
 )
 
 # datatypes from VOTable 1.3 REC:
