@@ -627,12 +627,12 @@ class VOAgentSerializer(NonNullCustomSerializer):
     voprov_name = CustomCharField(source='name', custom_field_name='voprov:name')
     voprov_email = CustomCharField(source='email', custom_field_name='voprov:email')
     voprov_address = CustomCharField(source='address', custom_field_name='voprov:address')
-    custom_annotation = CustomCharField(source='annotation', custom_field_name='custom:annotation')
+    voprov_annotation = CustomCharField(source='annotation', custom_field_name='voprov:annotation') ## = non-standard field, but can get voprov-namespace as well
 
     class Meta:
         model = Agent
         fields = ('voprov_id', 'voprov_name', 'voprov_type', 'voprov_email',
-            'voprov_address', 'custom_annotation')
+            'voprov_address', 'voprov_annotation')
 
 
 class VOParameterSerializer(NonNullCustomSerializer):
