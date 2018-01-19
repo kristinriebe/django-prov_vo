@@ -333,12 +333,6 @@ def provdal_form(request):
                     reverse('prov_vo:provdal')+"?" + urllib.urlencode(urlparams)
                 )
 
-                # return HttpResponseRedirect(
-                #     reverse('prov_vo:provdal')+"?ID=%s&DEPTH=%s&DIRECTION=%s&MEMBERS=%s&STEPS=%s&AGENT=%s&RESPONSEFORMAT=%s&MODEL=%s" %
-                #     (str(obj_id), str(depth).upper(), str(direction).upper(), str(members).upper(),
-                #     str(steps).upper(), str(agent).upper(), str(format).upper(),
-                #     str(compliance).upper()))
-
             except ValueError:
                 form = ProvDalForm(request.POST)
         else:

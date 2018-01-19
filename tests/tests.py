@@ -914,11 +914,11 @@ class ProvDALForm_TestCase(TestCase):
     def test_provdalform_post(self):
         client = Client()
         response = client.post(reverse('prov_vo:provdal_form'),
-            {'obj_id': 'rave:dr4', 'depth': '1', 'direction': 'BACK', 'format': 'PROV-JSON', 'model': 'IVOA'})
+            {'obj_id': 'rave:dr4', 'depth': '2', 'direction': 'BACK', 'format': 'PROV-N', 'model': 'W3C'})
         # should redirect to provdal:
         self.assertEqual(response.status_code, 302)
 
-        url = '/prov_vo/provdal/?ID=rave:dr4&DEPTH=1&DIRECTION=BACK&MEMBERS=FALSE&STEPS=FALSE&AGENT=FALSE&RESPONSEFORMAT=PROV-JSON&MODEL=IVOA'
+        url = '/prov_vo/provdal/?DEPTH=2&ID=rave%3Adr4&MODEL=W3C&RESPONSEFORMAT=PROV-N'
         self.assertEqual(response.url, url)
 
 
