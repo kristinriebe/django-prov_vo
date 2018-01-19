@@ -1,5 +1,6 @@
 import sys # just for debugging
 import json
+import urllib
 from datetime import datetime
 
 from django.conf import settings
@@ -309,11 +310,34 @@ def provdal_form(request):
                 format = form.cleaned_data['format']
                 compliance = form.cleaned_data['model']
 
+                urlparams = {}
+                urlparams['ID'] = str(obj_id)
+
+                if depth != form.fields['depth'].initial:
+                    urlparams['DEPTH'] = str(depth).upper()
+                if compliance != form.fields['model'].initial:
+                    urlparams['MODEL'] = str(compliance).upper()
+                if direction != form.fields['direction'].initial:
+                    urlparams['DIRECTION'] = str(direction).upper()
+
+                if members != form.fields['members'].initial:
+                    urlparams['MEMBERS'] = str(members).upper()
+                if steps != form.fields['steps'].initial:
+                    urlparams['STEPS'] = str(steps).upper()
+                if agent != form.fields['agent'].initial:
+                    urlparams['AGENT'] = str(agent).upper()
+                if format != form.fields['format'].initial:
+                    urlparams['RESPONSEFORMAT'] = str(format).upper()
+
                 return HttpResponseRedirect(
-                    reverse('prov_vo:provdal')+"?ID=%s&DEPTH=%s&DIRECTION=%s&MEMBERS=%s&STEPS=%s&AGENT=%s&RESPONSEFORMAT=%s&MODEL=%s" %
-                    (str(obj_id), str(depth).upper(), str(direction).upper(), str(members).upper(),
-                    str(steps).upper(), str(agent).upper(), str(format).upper(),
-                    str(compliance).upper()))
+                    reverse('prov_vo:provdal')+"?" + urllib.urlencode(urlparams)
+                )
+
+                # return HttpResponseRedirect(
+                #     reverse('prov_vo:provdal')+"?ID=%s&DEPTH=%s&DIRECTION=%s&MEMBERS=%s&STEPS=%s&AGENT=%s&RESPONSEFORMAT=%s&MODEL=%s" %
+                #     (str(obj_id), str(depth).upper(), str(direction).upper(), str(members).upper(),
+                #     str(steps).upper(), str(agent).upper(), str(format).upper(),
+                #     str(compliance).upper()))
 
             except ValueError:
                 form = ProvDalForm(request.POST)
