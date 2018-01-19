@@ -921,6 +921,25 @@ class ProvDALForm_TestCase(TestCase):
         url = '/prov_vo/provdal/?DEPTH=2&ID=rave%3Adr4&MODEL=W3C&RESPONSEFORMAT=PROV-N'
         self.assertEqual(response.url, url)
 
+    def test_provdalform_post_defaults(self):
+        client = Client()
+        response = client.post(reverse('prov_vo:provdal_form'),
+            {'obj_id': 'rave:dr4', 'depth': '1', 'direction': 'BACK', 'format': 'PROV-JSON', 'model': 'IVOA'})
+        # should redirect to provdal:
+        self.assertEqual(response.status_code, 302)
+
+        url = '/prov_vo/provdal/?ID=rave%3Adr4'
+        self.assertEqual(response.url, url)
+
+    def test_provdalform_post_notdefaults(self):
+        client = Client()
+        response = client.post(reverse('prov_vo:provdal_form'),
+            {'obj_id': 'rave:dr4', 'depth': '4', 'direction': 'FORTH', 'format': 'PROV-N', 'model': 'W3C', 'members': True, 'steps': True, 'agent': True})
+        # should redirect to provdal:
+        self.assertEqual(response.status_code, 302)
+
+        url = '/prov_vo/provdal/?DIRECTION=FORTH&RESPONSEFORMAT=PROV-N&AGENT=TRUE&DEPTH=4&STEPS=TRUE&MEMBERS=TRUE&MODEL=W3C&ID=rave%3Adr4'
+        self.assertEqual(response.url, url)
 
 class View_Allprov_TestCase(TestCase):
     def setUp(self):
