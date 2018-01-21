@@ -208,6 +208,7 @@ class AgentSerializer(NonNullCustomSerializer):
 
 class UsedSerializer(NonNullCustomSerializer):
 
+    print('huha!')
     prov_activity = CustomCharField(source='activity_id', custom_field_name='prov:activity')
     prov_entity = CustomCharField(source='entity_id', custom_field_name='prov:entity')
     prov_time = CustomDateTimeField(source='time', custom_field_name='prov:time')
@@ -317,6 +318,7 @@ class W3CParameterSerializer(EntitySerializer):
     prov_label = CustomCharField(source='description.name', custom_field_name='prov:label')
     prov_description = CustomCharField(source='description.annotation', custom_field_name='prov:description')
     voprov_votype = CustomSerializerMethodField(custom_field_name='voprov:votype')
+    voprov_description = CustomCharField(source='description.id', custom_field_name='voprov:description')
     voprov_activity = CustomCharField(source='activity.id', custom_field_name='voprov:activity')
     voprov_datatype = CustomCharField(source='description.datatype', custom_field_name='voprov:datatype')
     voprov_xtype = CustomCharField(source='description.xtype', custom_field_name='voprov:xtype')
@@ -333,7 +335,8 @@ class W3CParameterSerializer(EntitySerializer):
 
     class Meta:
         model = Parameter
-        fields = ('prov_id', 'prov_value', 'prov_label', 'prov_description', 'voprov_votype',
+        fields = ('prov_id', 'prov_value', 'prov_label', 'prov_description',
+                  'voprov_votype', 'voprov_description',
                   'voprov_activity', 'voprov_datatype', 'voprov_xtype',
                   'voprov_unit', 'voprov_ucd', 'voprov_utype', 'voprov_arraysize',
                   'voprov_minval', 'voprov_maxval', 'voprov_options'
@@ -388,9 +391,10 @@ class W3CProvenanceSerializer(serializers.Serializer):
             entity[e_id] = data
 
         # and add parameters
-        for e_id, e in obj['parameter'].iteritems():
-            data = W3CParameterSerializer(e).data
-            entity[e_id] = data
+        for p_id, p in obj['parameter'].iteritems():
+            data = W3CParameterSerializer(p).data
+            entity[p_id] = data
+            # add additional used-relationship at "get_parameter"
 
         # and add descriptions
         for e_id, e in obj['entityDescription'].iteritems():
@@ -417,6 +421,18 @@ class W3CProvenanceSerializer(serializers.Serializer):
             data = UsedSerializer(u).data
             u_id = self.add_namespace_to_id(u_id)
             used[u_id] = self.restructure_relations(data)
+
+        # add one used-relationshop for each parameter, only temporary (do not save!):
+        num_param = 0
+        for p_id, p in obj['parameter'].iteritems():
+            activity = p.activity
+            u_id = 'p%s' % num_param
+            data = {'id': u_id, 'activity': activity.id, 'entity': p_id, 'role': 'voprov:parameter'}
+
+            u_id = self.add_namespace_to_id(u_id)
+            used[u_id] = self.restructure_relations(data)
+
+            num_param += 1
 
         return used
 

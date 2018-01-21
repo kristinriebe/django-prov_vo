@@ -739,7 +739,8 @@ parameterDescription(ex:paramdesc1, Parameter1, [voprov:datatype="float", voprov
         content = get_content(response)
         expected = \
 """activity(ex:act, -, -, [prov:label="myactivity"])
-entity(ex:param1, [prov:value="1.0", prov:label="Parameter1", voprov:votype="voprov:parameter", voprov:activity="ex:act", voprov:datatype="float", voprov:unit="sec"])
+entity(ex:param1, [prov:value="1.0", prov:label="Parameter1", voprov:votype="voprov:parameter", voprov:description="ex:paramdesc1", voprov:activity="ex:act", voprov:datatype="float", voprov:unit="sec"])
+used(ex:act, ex:param1, -, [prov:role="voprov:parameter"])
 """
         self.assertEqual(content, expected)
 
