@@ -123,6 +123,6 @@ TODO
 * write extended documentation
 * publish as PyPi package
 
-* Implement xml serialization, votable serialization, for REST api and for Prov-DAL endoint
-* Implement "description" classes, i.e. ActivityDescription etc. (if needed)
+* Implement votable serialization, for REST api and for Prov-DAL endoint
+* Implement Used/WasGeneratedBy-description classes
 * Find a better way to visualize activityFlow, collection, detail/basic etc.

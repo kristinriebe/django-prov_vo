@@ -40,7 +40,8 @@ class PROVXMLRenderer(BaseRenderer):
         root = etree.Element(PROV+'document', nsmap=nsmap)
         root2 = etree.Element(PROV+'document', nsmap=nsmap)
 
-        # TODO: sort attributes: 1. mandatory att., 2. optional att. in alphabetical order
+        # Sort attributes: 1. mandatory att., 2. optional att. in alphabetical order
+        # => Done by sorting fields in serializers
         for classkey in data:
             for e in data[classkey]:
                 leaf = etree.SubElement(root, PROV+classkey)
