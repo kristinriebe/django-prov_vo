@@ -781,8 +781,7 @@ activityDescription(ex:actdesc1, Activity Description 1, [voprov:type="observati
         self.assertEqual(response.status_code, 200)
         content = get_content(response)
         expected = \
-"""activity(ex:act1, -, -, [prov:label="Activity 1", voprov:description="ex:actdesc1"])
-entity(ex:actdesc1, [prov:label="Activity Description 1", voprov:votype="voprov:activityDescription", prov:type="observation"])
+"""activity(ex:act1, -, -, [prov:label="Activity 1", voprov:description="ex:actdesc1", voprov:desc_name="Activity Description 1", voprov:desc_type="observation"])
 """
         self.assertEqual(content, expected)
 
@@ -823,8 +822,7 @@ entityDescription(ex:entdesc1, Entity Description 1, [voprov:category="image"])
         self.assertEqual(response.status_code, 200)
         content = get_content(response)
         expected = \
-"""entity(ex:entdesc1, [prov:label="Entity Description 1", voprov:votype="voprov:entityDescription", voprov:category="image"])
-entity(ex:ent1, [prov:label="Entity 1", voprov:description="ex:entdesc1"])
+"""entity(ex:ent1, [prov:label="Entity 1", voprov:description="ex:entdesc1", voprov:desc_name="Entity Description 1", voprov:desc_category="image"])
 """
         self.assertEqual(content, expected)
 
