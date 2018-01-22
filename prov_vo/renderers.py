@@ -8,8 +8,7 @@ from django.utils.encoding import smart_text
 from django.utils.encoding import smart_unicode
 from django.utils import timezone
 from rest_framework.renderers import BaseRenderer
-import lxml.etree as etree  # for pretty printing xml
-
+from lxml import etree
 
 class PROVJSONRenderer(BaseRenderer):
     def render(self, data):
@@ -24,6 +23,96 @@ class PROVJSONRenderer(BaseRenderer):
             )
 
         return string
+
+
+class PROVXMLRenderer(BaseRenderer):
+    def render(self, data):
+        # remove empty dicts
+        for key, value in data.iteritems():
+            if len(value) == 0:
+                data.pop(key)
+
+        nsmap = {}
+        for prefix, ns in data['prefix'].iteritems():
+            nsmap[prefix] = ns
+        data.pop('prefix')
+        PROV = "{%s}" % nsmap['voprov']
+        root = etree.Element(PROV+'document', nsmap=nsmap)
+        root2 = etree.Element(PROV+'document', nsmap=nsmap)
+
+        # TODO: sort attributes: 1. mandatory att., 2. optional att. in alphabetical order
+        for classkey in data:
+            for e in data[classkey]:
+                leaf = etree.SubElement(root, PROV+classkey)
+
+                for attribute in data[classkey][e]:
+                    if attribute == 'voprov:id':
+                        leaf.attrib[PROV+'id'] = data[classkey][e]['voprov:id']
+                    else:
+                        att_ns = attribute.split(':')[0]
+                        NS = "{%s}" % nsmap[att_ns]
+                        att_name = attribute.split(':')[1]
+                        leaf2 = etree.SubElement(leaf, NS+att_name)
+                        if attribute in ['voprov:description', 'voprov:activity', 'voprov:entity', 'voprov:agent']:
+                            leaf2.attrib[PROV+'ref'] = data[classkey][e][attribute]
+                        else:
+                            leaf2.text = data[classkey][e][attribute]
+
+        xml = etree.tostring(root, pretty_print=True)
+
+        return xml
+
+
+class W3CPROVXMLRenderer(BaseRenderer):
+    def render(self, data):
+
+        # remove empty dicts
+        for key, value in data.iteritems():
+            if len(value) == 0:
+                data.pop(key)
+
+        nsmap = {}
+        for prefix, ns in data['prefix'].iteritems():
+            nsmap[prefix] = ns
+        data.pop('prefix')
+        PROV = "{%s}" % nsmap['prov']
+        root = etree.Element(PROV+'document', nsmap=nsmap)
+        root2 = etree.Element(PROV+'document', nsmap=nsmap)
+
+        # Sort attributes: 1. mandatory att., 2. optional att. in alphabetical order
+        # => Done by sorting fields in serializers
+        for classkey in data:
+            for e in data[classkey]:
+                leaf = etree.SubElement(root, PROV+classkey)
+
+                for attribute in data[classkey][e]:
+                    if attribute == 'prov:id':
+                        leaf.attrib[PROV+'id'] = data[classkey][e]['prov:id']
+                    else:
+                        att_ns = attribute.split(':')[0]
+                        NS = "{%s}" % nsmap[att_ns]
+                        att_name = attribute.split(':')[1]
+                        leaf2 = etree.SubElement(leaf, NS+att_name)
+
+                        if attribute in ['prov:activity', 'prov:entity', 'prov:agent']:
+                            leaf2.attrib[PROV+'ref'] = data[classkey][e][attribute]
+                        elif attribute == 'voprov:description':
+                            # embed the descriptions here
+                            for desc_attribute in data[classkey][e][attribute]:
+                                if desc_attribute == 'voprov:id':
+                                    leaf.attrib[PROV+'id'] = data[classkey][e][attribute]['voprov:id']
+                                else:
+                                    att_ns = desc_attribute.split(':')[0]
+                                    NS = "{%s}" % nsmap[att_ns]
+                                    att_name = desc_attribute.split(':')[1]
+                                    leaf3 = etree.SubElement(leaf2, NS+att_name)
+                                    leaf3.text = data[classkey][e][attribute][desc_attribute]
+                        else:
+                            leaf2.text = data[classkey][e][attribute]
+
+        xml = etree.tostring(root, pretty_print=True)
+
+        return xml
 
 
 class PROVNBaseRenderer(BaseRenderer):

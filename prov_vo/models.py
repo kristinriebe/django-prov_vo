@@ -177,30 +177,51 @@ class ParameterDescription(models.Model):
 @python_2_unicode_compatible
 class Used(models.Model):
     id = models.AutoField(primary_key=True)
-    activity = models.ForeignKey(Activity, null=True) #, on_delete=models.CASCADE) # Should be required!
-    entity = models.ForeignKey(Entity, null=True) #, on_delete=models.CASCADE) # Should be required!
+    activity = models.ForeignKey(Activity, null=True, blank=True, on_delete=models.SET_NULL) #, on_delete=models.CASCADE) # Should be required!
+    entity = models.ForeignKey(Entity, null=True, blank=True, on_delete=models.SET_NULL) #, on_delete=models.CASCADE) # Should be required!
     time = models.DateTimeField(null=True)
+    role = models.CharField(max_length=128, blank=True, null=True) #-> move to description!
+    description = models.ForeignKey("UsedDescription", null=True, blank=True, on_delete=models.SET_NULL)
+    def __str__(self):
+        return "id=%s; activity=%s; entity=%s" % (str(self.id), self.activity, self.entity)
+
+@python_2_unicode_compatible
+class UsedDescription(models.Model):
+    id = models.AutoField(primary_key=True)
+    activityDescription = models.ForeignKey(ActivityDescription, null=True, blank=True, on_delete=models.SET_NULL) #, on_delete=models.CASCADE) # Should be required!
+    entityDescription = models.ForeignKey(EntityDescription, null=True, blank=True, on_delete=models.SET_NULL) #, on_delete=models.CASCADE) # Should be required!
     role = models.CharField(max_length=128, blank=True, null=True)
 
     def __str__(self):
-        return "id=%s; activity=%s; entity=%s; role=%s" % (str(self.id), self.activity, self.entity, self.role)
+        return "id=%s; activityDescription=%s; entityDescription=%s; role=%s" % (str(self.id), self.activityDescription, self.entityDescription, self.role)
 
 @python_2_unicode_compatible
 class WasGeneratedBy(models.Model):
     id = models.AutoField(primary_key=True)
-    entity = models.ForeignKey(Entity, null=True) #, on_delete=models.CASCADE)
-    activity = models.ForeignKey(Activity, null=True) #, on_delete=models.CASCADE)
+    entity = models.ForeignKey(Entity, null=True, blank=True, on_delete=models.SET_NULL) #, on_delete=models.CASCADE)
+    activity = models.ForeignKey(Activity, null=True, blank=True, on_delete=models.SET_NULL) #, on_delete=models.CASCADE)
     time = models.DateTimeField(null=True)
+    role = models.CharField(max_length=128, blank=True, null=True)  # -> move to desc.!
+    description = models.ForeignKey("WasGeneratedByDescription", null=True, blank=True, on_delete=models.SET_NULL)
+
+    def __str__(self):
+        return "id=%s; entity=%s; activity=%s" % (str(self.id), self.entity, self.activity)
+
+@python_2_unicode_compatible
+class WasGeneratedByDescription(models.Model):
+    id = models.AutoField(primary_key=True)
+    entityDescription = models.ForeignKey(EntityDescription, null=True, blank=True, on_delete=models.SET_NULL) #, on_delete=models.CASCADE)
+    activityDescription = models.ForeignKey(ActivityDescription, null=True, blank=True, on_delete=models.SET_NULL) #, on_delete=models.CASCADE)
     role = models.CharField(max_length=128, blank=True, null=True)
 
     def __str__(self):
-        return "id=%s; entity=%s; activity=%s; role=%s" % (str(self.id), self.entity, self.activity, self.role)
+        return "id=%s; entityDescription=%s; activityDescription=%s; role=%s" % (str(self.id), self.entityDescription, self.activityDescription, self.role)
 
 @python_2_unicode_compatible
 class WasDerivedFrom(models.Model):
     id = models.AutoField(primary_key=True)
-    generatedEntity = models.ForeignKey(Entity, null=True)
-    usedEntity = models.ForeignKey(Entity, related_name='generatedEntity', null=True) #, on_delete=models.CASCADE)
+    generatedEntity = models.ForeignKey(Entity, null=True, blank=True, on_delete=models.SET_NULL)
+    usedEntity = models.ForeignKey(Entity, related_name='generatedEntity', null=True, blank=True, on_delete=models.SET_NULL) #, on_delete=models.CASCADE)
 
     def __str__(self):
         return "id=%s; generatedEntity=%s; usedEntity=%s" % (str(self.id), self.generatedEntity, self.usedEntity)
@@ -208,8 +229,8 @@ class WasDerivedFrom(models.Model):
 @python_2_unicode_compatible
 class WasInformedBy(models.Model):
     id = models.AutoField(primary_key=True)
-    informed = models.ForeignKey(Activity, null=True)
-    informant = models.ForeignKey(Activity, related_name='informed', null=True)
+    informed = models.ForeignKey(Activity, null=True, blank=True, on_delete=models.SET_NULL)
+    informant = models.ForeignKey(Activity, related_name='informed', null=True, blank=True, on_delete=models.SET_NULL)
 #    role = models.CharField(max_length=128, blank=True, null=True)
 
     def __str__(self):
@@ -218,8 +239,8 @@ class WasInformedBy(models.Model):
 @python_2_unicode_compatible
 class WasAssociatedWith(models.Model):
     id = models.AutoField(primary_key=True)
-    activity = models.ForeignKey(Activity, null=True)
-    agent = models.ForeignKey(Agent, null=True) #, on_delete=models.CASCADE)
+    activity = models.ForeignKey(Activity, null=True, blank=True, on_delete=models.SET_NULL)
+    agent = models.ForeignKey(Agent, null=True, blank=True, on_delete=models.SET_NULL) #, on_delete=models.CASCADE)
     role = models.CharField(max_length=128, blank=True, null=True)
 
     def __str__(self):
@@ -228,8 +249,8 @@ class WasAssociatedWith(models.Model):
 @python_2_unicode_compatible
 class WasAttributedTo(models.Model):
     id = models.AutoField(primary_key=True)
-    entity = models.ForeignKey(Entity, null=True)
-    agent = models.ForeignKey(Agent, null=True) #, on_delete=models.CASCADE)
+    entity = models.ForeignKey(Entity, null=True, blank=True, on_delete=models.SET_NULL)
+    agent = models.ForeignKey(Agent, null=True, blank=True, on_delete=models.SET_NULL) #, on_delete=models.CASCADE)
     role = models.CharField(max_length=128, blank=True, null=True)  # not allowed by W3C!!
 
     def __str__(self):
@@ -239,8 +260,8 @@ class WasAttributedTo(models.Model):
 @python_2_unicode_compatible
 class HadMember(models.Model):
     id = models.AutoField(primary_key=True)
-    collection = models.ForeignKey(Collection, null=True)  # enforce prov-type: collection
-    entity = models.ForeignKey(Entity, related_name='ecollection', null=True) # related_name = 'collection' throws error!
+    collection = models.ForeignKey(Collection, null=True, blank=True, on_delete=models.SET_NULL)  # enforce prov-type: collection
+    entity = models.ForeignKey(Entity, related_name='ecollection', null=True, blank=True, on_delete=models.SET_NULL) # related_name = 'collection' throws error!
 
     def __str__(self):
         return "id=%s; collection=%s; entity=%s; role=%s" % (str(self.id), self.collection, self.entity, self.role)
@@ -248,8 +269,8 @@ class HadMember(models.Model):
 @python_2_unicode_compatible
 class HadStep(models.Model):
     id = models.AutoField(primary_key=True)
-    activityFlow = models.ForeignKey(ActivityFlow, null=True) #, on_delete=models.CASCADE)
-    activity = models.ForeignKey(Activity, related_name='activityFlow', null=True)
+    activityFlow = models.ForeignKey(ActivityFlow, null=True, blank=True, on_delete=models.SET_NULL) #, on_delete=models.CASCADE)
+    activity = models.ForeignKey(Activity, related_name='activityFlow', null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return "id=%s; activityFlow=%s; activity=%s" % (str(self.id), self.activityFlow, self.activity)

@@ -71,7 +71,7 @@ from .serializers import (
     ParameterSerializer
 )
 
-from .renderers import PROVNRenderer, PROVJSONRenderer
+from .renderers import PROVNRenderer, PROVJSONRenderer, PROVXMLRenderer, W3CPROVXMLRenderer
 from vosi.renderers import VosiAvailabilityRenderer, VosiCapabilityRenderer
 
 from .forms import ProvDalForm
@@ -516,6 +516,13 @@ def provdal(request):
         json_str = PROVJSONRenderer().render(data)
         return HttpResponse(json_str, content_type='application/json; charset=utf-8')
 
+    elif format == 'PROV-XML':
+        if model == "W3C":
+            xml_str = W3CPROVXMLRenderer().render(data)
+        else:
+            xml_str = PROVXMLRenderer().render(data)
+        return HttpResponse(xml_str, content_type='application/xml; charset=utf-8')
+
     elif format == "GRAPH-JSON":
         # need to re-structure the serialized data
         serializer = ProvenanceGraphSerializer(data, model=model)
@@ -541,12 +548,13 @@ def check_accept_header_reponseformat(request, format):
         and "text/plain" not in http_accept
         and "application/*" not in http_accept
         and "text/*" not in http_accept
+        and "application/xml" not in http_accept
         and "*/*" not in http_accept):
         # 415 Unsupported media type
         responsestr = "Sorry, media type '%s' was requested, but is not supported by this service." % http_accept
         return 415, responsestr
 
-    if format not in "PROV-N PROV-JSON GRAPH GRAPH-JSON":
+    if format not in "PROV-N PROV-JSON GRAPH GRAPH-JSON PROV-XML":
         # 415 Unsupported media type
         responsestr = "Sorry, format '%s' was requested, but is not supported by this service." % format
         return 415, responsestr
@@ -579,6 +587,12 @@ def check_accept_header_reponseformat(request, format):
             or http_accept.find("*/*") >= 0)
         ):
         #print 'use GRAPH'
+        pass
+    elif (format == 'PROV-XML' and (\
+            http_accept.find('application/*') >= 0\
+            or http_accept.find('application/xml') >= 0\
+            or http_accept.find('*/*') >= 0)\
+        ):
         pass
     else:
         #print "Need to complain"
