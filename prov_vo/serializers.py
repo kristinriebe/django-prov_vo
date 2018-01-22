@@ -131,7 +131,7 @@ class ActivitySerializer(NonNullCustomSerializer):
     voprov_doculink = CustomCharField(source='doculink', custom_field_name='voprov:doculink')
     voprov_description = CustomCharField(source='description', custom_field_name='voprov:description')
 
-    # descriptin attributes, if existing:
+    # description attributes, if existing:
     voprov_desc_name = CustomCharField(source='description.name', custom_field_name='voprov:desc_name')
     voprov_desc_type = CustomCharField(source='description.type', custom_field_name='voprov:desc_type')     # maybe use prov:type?
     voprov_desc_subtype = CustomCharField(source='description.subtype', custom_field_name='voprov:desc_subtype')
@@ -276,6 +276,7 @@ class W3CHadStepSerializer(NonNullCustomSerializer):
     class Meta:
         model = HadStep
         fields = ('id', 'prov_influencee', 'prov_influencer', 'voprov_votype')
+
 
 class W3CActivityFlowSerializer(ActivitySerializer):
     voprov_votype = CustomSerializerMethodField(custom_field_name='voprov:votype')
