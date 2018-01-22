@@ -87,6 +87,15 @@ class NonNullCustomSerializer(serializers.ModelSerializer):
                 attribute = field.get_attribute(instance)
             except SkipField:
                 continue
+            except AttributeError:
+                # Attribute could not be retrieved, maybe it does not exist
+                # (e.g. because no description class is available and thus resolving description.name fails).
+                # But we don't worry about that at all, None-fields are going to be skipped here.
+                attribute = None
+                continue
+#            except:
+#                print "Some other unexpected error occured! ", sys.exc_info()[0]
+#                raise
 
             # Check, if there is a custom_field_name attribute.
             # If so (and it's not None), then use this instead of field name.
