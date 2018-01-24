@@ -110,6 +110,8 @@ Testing
 
 * This runs all the tests stored in :code:`tests`.
 
+* Use e.g. coverage run runtests.py tests.tests.ProvDAL_UsedDescription_TestCase for a single test case.
+
 
 TODO
 ----

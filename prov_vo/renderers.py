@@ -42,7 +42,8 @@ class PROVXMLRenderer(BaseRenderer):
         reference_list = ['voprov:description', 'voprov:activity', 'voprov:entity',
                 'voprov:agent', 'voprov:influencer', 'voprov:influencee',
                 'voprov:informed', 'voprov:informant', 'voprov:usedEntity',
-                'voprov:generatedEntity', 'voprov:collection', 'voprov:activityFlow']
+                'voprov:generatedEntity', 'voprov:collection', 'voprov:activityFlow',
+                'voprov:activityDescription', 'voprov:entityDescription']
 
         # Sort attributes: 1. mandatory att., 2. optional att. in alphabetical order
         # => Done by sorting fields in serializers
@@ -86,7 +87,8 @@ class W3CPROVXMLRenderer(BaseRenderer):
         reference_list = ['prov:description', 'prov:activity', 'prov:entity',
                 'prov:agent', 'prov:influencer', 'prov:influencee',
                 'prov:informed', 'prov:informant', 'prov:usedEntity',
-                'prov:generatedEntity', 'prov:collection', 'prov:activityFlow']
+                'prov:generatedEntity', 'prov:collection', 'prov:activityFlow',
+                'voprov:activityDescription', 'voprov:entityDescription']
 
         # Sort attributes: 1. mandatory att., 2. optional att. in alphabetical order
         # => Done by sorting fields in serializers
@@ -254,8 +256,7 @@ class ActivityDescriptionPROVNRenderer(PROVNBaseRenderer):
 
     def render(self, activityDescription):
         string = "activityDescription("
-        string += self.get_value(activityDescription, "id") + ", "
-        string += self.get_value(activityDescription, "name")
+        string += self.get_value(activityDescription, "id")
         string += ")"
 
         # add all other optional attributes in []
@@ -268,8 +269,7 @@ class EntityDescriptionPROVNRenderer(PROVNBaseRenderer):
 
     def render(self, entityDescription):
         string = "entityDescription("
-        string += self.get_value(entityDescription, "id") + ", "
-        string += self.get_value(entityDescription, "name")
+        string += self.get_value(entityDescription, "id")
         string += ")"
 
         # add all other optional attributes in []
@@ -301,6 +301,22 @@ class UsedPROVNRenderer(PROVNBaseRenderer):
         return string
 
 
+class UsedDescriptionPROVNRenderer(PROVNBaseRenderer):
+
+    def render(self, usedDescription):
+        string = "usedDescription("
+
+        # add id + references
+        string += self.get_value(usedDescription, "id") + ", "
+        string += self.get_value(usedDescription, "activityDescription") + ", "
+        string += self.get_value(usedDescription, "entityDescription") + ")"
+
+        # add all other optional attributes in []
+        string = self.add_optional_attributes(string, usedDescription)
+
+        return string
+
+
 class WasGeneratedByPROVNRenderer(PROVNBaseRenderer):
 
     def render(self, wasGeneratedBy):
@@ -321,6 +337,22 @@ class WasGeneratedByPROVNRenderer(PROVNBaseRenderer):
 
         # add all other optional attributes in []
         string = self.add_optional_attributes(string, wasGeneratedBy)
+
+        return string
+
+
+class WasGeneratedByDescriptionPROVNRenderer(PROVNBaseRenderer):
+
+    def render(self, wasGeneratedByDescription):
+        string = "wasGeneratedByDescription("
+
+        # add id + references
+        string += self.get_value(usedDescription, "id") + ", "
+        string += self.get_value(wasGeneratedByDescription, "entityDescription") + ", "
+        string += self.get_value(wasGeneratedByDescription, "activityDescription") + ") "
+
+        # add all other optional attributes in []
+        string = self.add_optional_attributes(string, wasGeneratedByDescription)
 
         return string
 
@@ -488,8 +520,16 @@ class PROVNRenderer(PROVNBaseRenderer):
         for u_id, u in data['used'].iteritems():
             string += UsedPROVNRenderer().render(u) + "\n"
 
+        if 'usedDescription' in data:
+            for u_id, u in data['used'].iteritems():
+                string += UsedDescriptionPROVNRenderer().render(u) + "\n"
+
         for w_id, w in data['wasGeneratedBy'].iteritems():
             string += WasGeneratedByPROVNRenderer().render(w) + "\n"
+
+        if 'wasGeneratedByDescription' in data:
+            for w_id, w in data['wasGeneratedBy'].iteritems():
+                string += WasGeneratedByDescriptionPROVNRenderer().render(w) + "\n"
 
         for w_id, w in data['wasAssociatedWith'].iteritems():
             string += WasAssociatedWithPROVNRenderer().render(w) + "\n"

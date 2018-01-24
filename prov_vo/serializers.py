@@ -729,10 +729,24 @@ class VOUsedSerializer(NonNullCustomSerializer):
         fields = '__all__'
 
 
+class VOUsedDescriptionSerializer(NonNullCustomSerializer):
+
+    class Meta:
+        model = UsedDescription
+        fields = '__all__'
+
+
 class VOWasGeneratedBySerializer(NonNullCustomSerializer):
 
     class Meta:
         model = WasGeneratedBy
+        fields = '__all__'
+
+
+class VOWasGeneratedByDescriptionSerializer(NonNullCustomSerializer):
+
+    class Meta:
+        model = WasGeneratedByDescription
         fields = '__all__'
 
 
@@ -762,6 +776,7 @@ class VOWasDerivedFromSerializer(NonNullCustomSerializer):
     class Meta:
         model = WasDerivedFrom
         fields = '__all__'
+
 
 class VOHadStepSerializer(NonNullCustomSerializer):
 
@@ -796,6 +811,8 @@ class VOProvenanceSerializer(serializers.Serializer):
     parameterDescription = serializers.SerializerMethodField()
     activityDescription = serializers.SerializerMethodField()
     entityDescription = serializers.SerializerMethodField()
+    usedDescription = serializers.SerializerMethodField()
+    wasGeneratedByDescription = serializers.SerializerMethodField()
     prefix = serializers.SerializerMethodField()
 
     def get_prefix(self, obj):
@@ -886,6 +903,15 @@ class VOProvenanceSerializer(serializers.Serializer):
 
         return used
 
+    def get_usedDescription(self, obj):
+        usedDescription = {}
+        for u_id, u in obj['usedDescription'].iteritems():
+            data = VOUsedDescriptionSerializer(u).data
+            u_id = self.add_namespace_to_id(u_id)
+            usedDescription[u_id] = self.restructure_relations(data)
+
+        return usedDescription
+
     def get_wasGeneratedBy(self, obj):
         wasGeneratedBy = {}
         for w_id, w in obj['wasGeneratedBy'].iteritems():
@@ -894,6 +920,15 @@ class VOProvenanceSerializer(serializers.Serializer):
             wasGeneratedBy[w_id] = self.restructure_relations(data)
 
         return wasGeneratedBy
+
+    def get_wasGeneratedByDescription(self, obj):
+        wasGeneratedByDescription = {}
+        for w_id, w in obj['wasGeneratedByDescription'].iteritems():
+            data = VOWasGeneratedByDescriptionSerializer(w).data
+            w_id = self.add_namespace_to_id(w_id)
+            wasGeneratedByDescription[w_id] = self.restructure_relations(data)
+
+        return wasGeneratedByDescription
 
     def get_wasAssociatedWith(self, obj):
         wasAssociatedWith = {}
@@ -974,6 +1009,9 @@ class VOProvenanceSerializer(serializers.Serializer):
             if key in ['activity', 'activityFlow', 'entity', 'collection', 'agent', 'generatedEntity', 'usedEntity', 'usage', 'generation', 'role', 'informed', 'informant']:
                 newkey = 'voprov:' + key
                 data[newkey] = data.pop(key)
+
+            if key in ['activityDescription', 'entityDescription']:
+                data['voprov:' + key] = data.pop(key)
 
         return data
 

@@ -47,7 +47,9 @@ from .models import (
     Parameter,
     ParameterDescription,
     ActivityDescription,
-    EntityDescription
+    EntityDescription,
+    UsedDescription,
+    WasGeneratedByDescription
     #Bundle,
 )
 
@@ -346,6 +348,8 @@ def provdal_form(request):
     return render(request, 'prov_vo/provdalform.html', {'form': form})
 
 
+# If errors shall be shown in browser directly, use @exceptions_to_http_status;
+# but be aware that this only shows some part of the message, not all the trace.
 @exceptions_to_http_status
 def provdal(request):
 
@@ -448,7 +452,9 @@ def provdal(request):
         'parameter': {},
         'parameterDescription': {},
         'activityDescription': {},
-        'entityDescription': {}
+        'entityDescription': {},
+        'usedDescription': {},
+        'wasGeneratedByDescription': {}
     }
 
     # Note: even if collection class is used, Entity.objects.all() still contains all entities
@@ -493,6 +499,7 @@ def provdal(request):
                     agent_flag=agent_flag)
         except Agent.DoesNotExist:
             pass
+
 
     # The prov dictionary now contains the complete provenance information,
     # for all given entity ids,

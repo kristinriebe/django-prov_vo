@@ -145,6 +145,10 @@ def track_entity(entity, prov, countdown, direction='BACK', members_flag=False, 
             if wg.id not in prov['wasGeneratedBy']:
                 prov['wasGeneratedBy'][wg.id] = wg
 
+                # also add corresponding description class, if existing
+                if wg.description:
+                    prov['wasGeneratedByDescription'][wg.description.id] = wg.description
+
             # add activity(flow) to prov-list, if not included already
             activity_type = get_activity_type(wg.activity.id)
             if wg.activity.id not in prov[activity_type]:
@@ -174,6 +178,10 @@ def track_entity(entity, prov, countdown, direction='BACK', members_flag=False, 
             # add used-link, if not yet done
             if u.id not in prov['used']:
                 prov['used'][u.id] = u
+
+                # also add corresponding description class, if existing
+                if u.description:
+                    prov['usedDescription'][u.description.id] = u.description
 
             # add activity to prov, if not yet done
             activity_type = get_activity_type(u.activity.id)
@@ -266,10 +274,12 @@ def track_activity(activity, prov, countdown, direction='BACK', members_flag=Fal
 
     # add parameters of the current activity, if existing;
     # independent of back/forth
+    # TODO: need to always add them as soon as an entity was hit, not just when following an entity further!!
+    # Same for entityDescription, activityDescription , usedDescription and wasGeneratedByDescription
     queryset = Parameter.objects.filter(activity=activity.id)
     for p in queryset:
         prov['parameter'][p.id] = p
-        # if there is a parameter, a corresponding activityDescription
+        # if there is a parameter, a corresponding parameterDescription
         # must also exist
         prov['parameterDescription'][p.description.id] = p.description
 
@@ -321,6 +331,10 @@ def track_activity(activity, prov, countdown, direction='BACK', members_flag=Fal
             if u.id not in prov['used']:
                 prov['used'][u.id] = u
 
+                # also add corresponding description class, if existing
+                if u.description:
+                    prov['usedDescription'][u.description.id] = u.description
+
             # add entity to prov, if not yet done
             if u.entity.id not in prov['entity']:
                 prov['entity'][u.entity.id] = u.entity
@@ -342,6 +356,10 @@ def track_activity(activity, prov, countdown, direction='BACK', members_flag=Fal
             # add wasGeneratedBy-link
             if wg.id not in prov['wasGeneratedBy']:
                 prov['wasGeneratedBy'][wg.id] = wg
+
+                # also add corresponding description class, if existing
+                if wg.description:
+                    prov['wasGeneratedByDescription'][wg.description.id] = wg.description
 
             # add entity to prov-list, if not included already
             if wg.entity.id not in prov['entity']:

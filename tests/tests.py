@@ -14,7 +14,7 @@ from prov_vo.models import Activity, ActivityFlow, HadStep
 from prov_vo.models import Entity, Collection, WasGeneratedBy, Used, WasDerivedFrom, WasInformedBy, HadMember
 from prov_vo.models import Agent, WasAssociatedWith, WasAttributedTo
 from prov_vo.models import Parameter, ParameterDescription
-from prov_vo.models import ActivityDescription, EntityDescription
+from prov_vo.models import ActivityDescription, EntityDescription, UsedDescription, WasGeneratedByDescription
 
 from prov_vo.forms import ProvDalForm
 
@@ -89,6 +89,22 @@ class Used_TestCase(TestCase):
         self.assertEqual(qset.activity.id, "rave:act")
 
 
+class UsedDescription_TestCase(TestCase):
+
+    def setUp(self):
+        e = EntityDescription.objects.create(id="rave:pipeline", name="RAVE Pipeline")
+        e.save()
+        a = ActivityDescription.objects.create(id="rave:act", name="myactivity")
+        a.save()
+        u = UsedDescription.objects.create(activityDescription=a, entityDescription=e)
+        u.save()
+
+    def test_getUsedDescription(self):
+        qset = UsedDescription.objects.get(entityDescription="rave:pipeline")
+        self.assertEqual(qset.entityDescription.name, "RAVE Pipeline")
+        self.assertEqual(qset.activityDescription.id, "rave:act")
+
+
 class WasGeneratedBy_TestCase(TestCase):
 
     def setUp(self):
@@ -103,6 +119,22 @@ class WasGeneratedBy_TestCase(TestCase):
         qset = WasGeneratedBy.objects.get(entity="rave:data")
         self.assertEqual(qset.entity.name, "RAVE data")
         self.assertEqual(qset.activity.id, "rave:act")
+
+
+class WasGeneratedByDescription_TestCase(TestCase):
+
+    def setUp(self):
+        e = EntityDescription.objects.create(id="rave:data", name="RAVE data")
+        e.save()
+        a = ActivityDescription.objects.create(id="rave:act", name="myactivity")
+        a.save()
+        wg = WasGeneratedByDescription.objects.create(activityDescription=a, entityDescription=e)
+        wg.save()
+
+    def test_getWasGeneratedByDescription(self):
+        qset = WasGeneratedByDescription.objects.get(entityDescription="rave:data")
+        self.assertEqual(qset.entityDescription.name, "RAVE data")
+        self.assertEqual(qset.activityDescription.id, "rave:act")
 
 
 # View tests
@@ -281,7 +313,7 @@ entity(rave:obs, [voprov:name="RAVE observations"])
 
     def test_get_multisinglevalues(self):
         client = Client()
-        for param in ['FORMAT', 'DEPTH', 'MODEL', 'MEMBERS', 'STEPS', 'AGENT', 'DIRECTION']:
+        for param in ['RESPONSEFORMAT', 'DEPTH', 'MODEL', 'MEMBERS', 'STEPS', 'AGENT', 'DIRECTION']:
             response = client.get(reverse('prov_vo:provdal')+'?ID=rave:dr4&%s=1&%s=2' % (param, param))
             self.assertEqual(response.status_code, 400)
             content = response.content
@@ -926,6 +958,42 @@ entityDescription(ex:entdesc1, Entity Description 1, [voprov:category="image"])
 </prov:document>
 """
         self.assertEqual(content, expected)
+
+# TODO: FIX THIS!
+class ProvDAL_UsedDescription_TestCase(TestCase):
+
+    def setUp(self):
+        ed = EntityDescription.objects.create(id="ex:entdesc1", name="Entity Description 1", category="image")
+        ed.save()
+        e = Entity.objects.create(id="ex:ent1", name="Entity 1", description=ed)
+        e.save()
+
+        ad = ActivityDescription.objects.create(id="ex:actdesc1", name="Activity Description 1", type="processing")
+        ad.save()
+        a = Activity.objects.create(id="ex:act1", name="Activity 1", description=ad)
+        a.save()
+
+        ud = UsedDescription.objects.create(id="ex:udesc1", activityDescription=ad, entityDescription=ed, role="input image")
+        ud.save()
+        u = Used.objects.create(id=1, activity=a, entity=e, description=ud)
+        u.save()
+
+
+    def test_getProvdalUsedDescriptionProvN(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:act1&DEPTH=3&RESPONSEFORMAT=PROV-N&MODEL=IVOA')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""activity(ex:act1, -, -, [voprov:name="Activity 1", voprov:description="ex:actdesc1"])
+activityDescription(ex:actdesc1, [voprov:name="Activity Description 1", voprov:type="processing"])
+entity(ex:ent1, [voprov:name="Entity 1", voprov:description="ex:entdesc1"])
+entityDescription(ex:entdesc1, [voprov:name="Entity Description 1", voprov:category="image"])
+used(ex:act1, ex:ent1, -, [description="ex:udesc1"])
+usedDescription(-, -, -, [description="ex:udesc1"])
+"""
+        self.assertEqual(content, expected)
+
 
 class ProvDAL_Graph_TestCase(TestCase):
 

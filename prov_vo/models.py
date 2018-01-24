@@ -106,6 +106,7 @@ class EntityDescription(models.Model):
     id = models.CharField(primary_key=True, max_length=128)
     name = models.CharField(max_length=128, null=True) # human readable label
     annotation = models.CharField(max_length=1024, null=True, blank=True)
+    datatype= models.CharField(max_length=128, null=True, blank=True, choices=DATATYPE_CHOICES)
     category = models.CharField(max_length=128, null=True, blank=True)
     doculink = models.CharField('documentation link', max_length=512, blank=True, null=True)
 
@@ -187,7 +188,7 @@ class Used(models.Model):
 
 @python_2_unicode_compatible
 class UsedDescription(models.Model):
-    id = models.AutoField(primary_key=True)
+    id = models.CharField(primary_key=True, max_length=128)
     activityDescription = models.ForeignKey(ActivityDescription, null=True, blank=True, on_delete=models.SET_NULL) #, on_delete=models.CASCADE) # Should be required!
     entityDescription = models.ForeignKey(EntityDescription, null=True, blank=True, on_delete=models.SET_NULL) #, on_delete=models.CASCADE) # Should be required!
     role = models.CharField(max_length=128, blank=True, null=True)
@@ -209,7 +210,7 @@ class WasGeneratedBy(models.Model):
 
 @python_2_unicode_compatible
 class WasGeneratedByDescription(models.Model):
-    id = models.AutoField(primary_key=True)
+    id = models.CharField(primary_key=True, max_length=128)
     entityDescription = models.ForeignKey(EntityDescription, null=True, blank=True, on_delete=models.SET_NULL) #, on_delete=models.CASCADE)
     activityDescription = models.ForeignKey(ActivityDescription, null=True, blank=True, on_delete=models.SET_NULL) #, on_delete=models.CASCADE)
     role = models.CharField(max_length=128, blank=True, null=True)
