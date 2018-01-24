@@ -38,7 +38,11 @@ class PROVXMLRenderer(BaseRenderer):
         data.pop('prefix')
         PROV = "{%s}" % nsmap['voprov']
         root = etree.Element(PROV+'document', nsmap=nsmap)
-        root2 = etree.Element(PROV+'document', nsmap=nsmap)
+
+        reference_list = ['voprov:description', 'voprov:activity', 'voprov:entity',
+                'voprov:agent', 'voprov:influencer', 'voprov:influencee',
+                'voprov:informed', 'voprov:informant', 'voprov:usedEntity',
+                'voprov:generatedEntity', 'voprov:collection', 'voprov:activityFlow']
 
         # Sort attributes: 1. mandatory att., 2. optional att. in alphabetical order
         # => Done by sorting fields in serializers
@@ -54,7 +58,7 @@ class PROVXMLRenderer(BaseRenderer):
                         NS = "{%s}" % nsmap[att_ns]
                         att_name = attribute.split(':')[1]
                         leaf2 = etree.SubElement(leaf, NS+att_name)
-                        if attribute in ['voprov:description', 'voprov:activity', 'voprov:entity', 'voprov:agent']:
+                        if attribute in reference_list:
                             leaf2.attrib[PROV+'ref'] = data[classkey][e][attribute]
                         else:
                             leaf2.text = data[classkey][e][attribute]
@@ -78,7 +82,11 @@ class W3CPROVXMLRenderer(BaseRenderer):
         data.pop('prefix')
         PROV = "{%s}" % nsmap['prov']
         root = etree.Element(PROV+'document', nsmap=nsmap)
-        root2 = etree.Element(PROV+'document', nsmap=nsmap)
+
+        reference_list = ['prov:description', 'prov:activity', 'prov:entity',
+                'prov:agent', 'prov:influencer', 'prov:influencee',
+                'prov:informed', 'prov:informant', 'prov:usedEntity',
+                'prov:generatedEntity', 'prov:collection', 'prov:activityFlow']
 
         # Sort attributes: 1. mandatory att., 2. optional att. in alphabetical order
         # => Done by sorting fields in serializers
@@ -95,7 +103,7 @@ class W3CPROVXMLRenderer(BaseRenderer):
                         att_name = attribute.split(':')[1]
                         leaf2 = etree.SubElement(leaf, NS+att_name)
 
-                        if attribute in ['prov:activity', 'prov:entity', 'prov:agent']:
+                        if attribute in reference_list:
                             leaf2.attrib[PROV+'ref'] = data[classkey][e][attribute]
                         elif attribute == 'voprov:description':
                             # embed the descriptions here

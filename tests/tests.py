@@ -403,6 +403,43 @@ agent(org:rave, [voprov:name="RAVE project"])
         found = re.findall(r"^act.*", response.content, flags=re.MULTILINE)
         self.assertEqual(len(found), 2)
 
+
+    def test_getProvdalHadStepW3C(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=rave:act&DEPTH=1&RESPONSEFORMAT=PROV-XML&MODEL=W3C')
+        self.assertEqual(response.status_code, 200)
+        expected = \
+"""<prov:document xmlns:custom="http://www.ivoa.net/documents/ProvenanceDM/ns/custom/" xmlns:prov="http://www.w3.org/ns/prov#" xmlns:rave="http://www.rave-survey.org/prov/" xmlns:voprov="http://www.ivoa.net/documents/ProvenanceDM/ns/voprov/" xmlns:xsd="http://www.w3.org/2000/10/XMLSchema#">
+  <prov:activity prov:id="rave:act">
+    <prov:label>myactivity</prov:label>
+  </prov:activity>
+  <prov:activity prov:id="rave:flow">
+    <prov:label>myflow</prov:label>
+    <voprov:votype>voprov:activityFlow</voprov:votype>
+  </prov:activity>
+  <prov:entity prov:id="rave:obs">
+    <prov:label>RAVE observations</prov:label>
+  </prov:entity>
+  <prov:agent prov:id="org:rave">
+    <prov:label>RAVE project</prov:label>
+  </prov:agent>
+  <prov:used>
+    <prov:activity prov:ref="rave:act"/>
+    <prov:entity prov:ref="rave:obs"/>
+  </prov:used>
+  <prov:wasAssociatedWith>
+    <prov:activity prov:ref="rave:act"/>
+    <prov:agent prov:ref="org:rave"/>
+  </prov:wasAssociatedWith>
+  <prov:wasInfluencedBy>
+    <prov:influencee prov:ref="rave:flow"/>
+    <prov:influencer prov:ref="rave:act"/>
+    <voprov:votype>voprov:hadStep</voprov:votype>
+  </prov:wasInfluencedBy>
+</prov:document>
+"""
+        self.assertEqual(expected, response.content)
+
     # In this implementation, ID can also take an agent's ID, but agent relations are only
     # followed beyond the agent if AGENT option is set to TRUE
     def test_getProvdalAgentFollow(self):
@@ -901,6 +938,42 @@ class ProvDAL_Graph_TestCase(TestCase):
         wd = WasDerivedFrom.objects.create(generatedEntity=e, usedEntity=e0)
         wd.save()
 
+        a1 = Activity.objects.create(id="rave:act1", name="Activity step 1")
+        a1.save()
+        a2 = Activity.objects.create(id="rave:act2", name="Activity step 2")
+        a2.save()
+        af = ActivityFlow.objects.create(id="rave:actflow", name="Activity flow")
+        af.save()
+
+        h = HadStep.objects.create(activityFlow=af, activity=a1)
+        h.save()
+        h = HadStep.objects.create(activityFlow=af, activity=a2)
+        h.save()
+
+        wi = WasInformedBy.objects.create(informed=a2, informant=a1)
+        wi.save()
+
+        u = Used.objects.create(activity=a1, entity=e0)
+        u.save()
+
+        wg = WasGeneratedBy.objects.create(entity=e, activity=a1)
+        wg.save()
+
+        c = Collection.objects.create(id="rave:raw", name="RAVE raw data files")
+        c.save()
+
+        h = HadMember.objects.create(collection=c, entity=e0)
+        h.save()
+
+        ag = Agent.objects.create(id=0, name="Anna Miracoli")
+        ag.save()
+
+        was = WasAssociatedWith(activity=a1, agent=ag)
+        was.save()
+
+        wat = WasAttributedTo(entity=e, agent=ag)
+        wat.save()
+
         #self.client = Client()
 
     def test_getProvdalGraph(self):
@@ -912,26 +985,36 @@ class ProvDAL_Graph_TestCase(TestCase):
 
     def test_getProvdalGraphJson(self):
         client = Client()
-        url = reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=1&RESPONSEFORMAT=GRAPH-JSON&MODEL=IVOA'
+        url = reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=2&RESPONSEFORMAT=GRAPH-JSON&MODEL=IVOA'
         response = client.get(url)
         self.assertEqual(response.status_code, 200)
 
         expected = \
-"""{"nodes": [{"type": "entity", "name": "RAVE DR4"}, {"type": "entity", "name": "RAVE observations"}],""" + \
-""" "links": [{"source": 0, "type": "wasDerivedFrom", "target": 1, "value": 0.2}]}"""
+"""{"nodes": [{"type": "activity", "name": "Activity step 1"}, {"type": "entity", "name": "RAVE DR4"}, {"type": "entity", "name": "RAVE observations"}, {"type": "entity", "name": "RAVE raw data files"}, {"type": "agent", "name": "Anna Miracoli"}, {"type": "activityFlow", "name": "Activity flow"}],""" + \
+""" "links": [{"source": 0, "type": "used", "target": 2, "value": 0.5}, {"source": 1, "type": "wasGeneratedBy", "target": 0, "value": 0.5}, {"source": 4, "type": "wasAssociatedWith", "target": 0, "value": 0.2}, {"source": 4, "type": "wasAttributedTo", "target": 1, "value": 0.2}, {"source": 3, "type": "hadMember", "target": 2, "value": 0.2}, {"source": 1, "type": "wasDerivedFrom", "target": 2, "value": 0.2}, {"source": 5, "type": "hadStep", "target": 0, "value": 0.2}]}"""
         self.assertEqual(response.content, expected)
 
-    def test_getProvdalGraphJson(self):
+    def test_getProvdalGraphJsonW3C(self):
         client = Client()
-        url = reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=1&RESPONSEFORMAT=GRAPH-JSON&MODEL=W3C'
+        url = reverse('prov_vo:provdal')+'?ID=rave:dr4&DEPTH=2&RESPONSEFORMAT=GRAPH-JSON&MODEL=W3C'
         response = client.get(url)
         self.assertEqual(response.status_code, 200)
 
         expected = \
-"""{"nodes": [{"type": "entity", "name": "RAVE DR4"}, {"type": "entity", "name": "RAVE observations"}],""" + \
-""" "links": [{"source": 0, "type": "wasDerivedFrom", "target": 1, "value": 0.2}]}"""
+"""{"nodes": [{"type": "activity", "name": "Activity flow"}, {"type": "activity", "name": "Activity step 1"}, {"type": "entity", "name": "RAVE DR4"}, {"type": "entity", "name": "RAVE observations"}, {"type": "entity", "name": "RAVE raw data files"}, {"type": "agent", "name": "Anna Miracoli"}],""" + \
+""" "links": [{"source": 1, "type": "used", "target": 3, "value": 0.5}, {"source": 2, "type": "wasGeneratedBy", "target": 1, "value": 0.5}, {"source": 5, "type": "wasAssociatedWith", "target": 1, "value": 0.2}, {"source": 5, "type": "wasAttributedTo", "target": 2, "value": 0.2}, {"source": 4, "type": "hadMember", "target": 3, "value": 0.2}, {"source": 2, "type": "wasDerivedFrom", "target": 3, "value": 0.2}]}"""
         self.assertEqual(response.content, expected)
 
+    def test_getProvdalGraph_Information(self):
+        client = Client()
+        url = reverse('prov_vo:provdal')+'?ID=rave:act2&DEPTH=1&RESPONSEFORMAT=GRAPH-JSON'
+        response = client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        expected = \
+"""{"nodes": [{"type": "activity", "name": "Activity step 2"}, {"type": "activity", "name": "Activity step 1"}, {"type": "activityFlow", "name": "Activity flow"}],""" + \
+""" "links": [{"source": 2, "type": "hadStep", "target": 0, "value": 0.2}, {"source": 0, "type": "wasInformedBy", "target": 1, "value": 0.2}]}"""
+        self.assertEqual(response.content, expected)
 
 class ProvDALForm_TestCase(TestCase):
 

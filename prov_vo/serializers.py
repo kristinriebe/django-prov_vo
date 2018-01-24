@@ -1058,8 +1058,6 @@ class ProvenanceGraphSerializer(serializers.Serializer):
 
         if 'wasAssociatedWith' in obj:
             for r_id, r in obj['wasAssociatedWith'].iteritems():
-                print r
-            for r_id, r in obj['wasAssociatedWith'].iteritems():
                 value = 0.2
                 # if there is an agent, link to it:
                 if self.add_namespace('agent', ns) in r:
