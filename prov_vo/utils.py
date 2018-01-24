@@ -97,9 +97,9 @@ def track_entity(entity, prov, countdown, direction='BACK', members_flag=False, 
 
     # add description of the current entity, if existing;
     # independent of back/forth
-    if entity.description is not None:
-        if entity.description.id not in prov['entityDescription']:
-            prov['entityDescription'][entity.description.id] = entity.description
+    #if entity.description is not None:
+    #    if entity.description.id not in prov['entityDescription']:
+    #        prov['entityDescription'][entity.description.id] = entity.description
 
     # First go through the 'short-cut' relation 'wasDerivedFrom'
     # because thus I only need to follow those nodes via the long
@@ -146,8 +146,8 @@ def track_entity(entity, prov, countdown, direction='BACK', members_flag=False, 
                 prov['wasGeneratedBy'][wg.id] = wg
 
                 # also add corresponding description class, if existing
-                if wg.description:
-                    prov['wasGeneratedByDescription'][wg.description.id] = wg.description
+                #if wg.description:
+                #    prov['wasGeneratedByDescription'][wg.description.id] = wg.description
 
             # add activity(flow) to prov-list, if not included already
             activity_type = get_activity_type(wg.activity.id)
@@ -180,8 +180,8 @@ def track_entity(entity, prov, countdown, direction='BACK', members_flag=False, 
                 prov['used'][u.id] = u
 
                 # also add corresponding description class, if existing
-                if u.description:
-                    prov['usedDescription'][u.description.id] = u.description
+                #if u.description:
+                #    prov['usedDescription'][u.description.id] = u.description
 
             # add activity to prov, if not yet done
             activity_type = get_activity_type(u.activity.id)
@@ -281,13 +281,13 @@ def track_activity(activity, prov, countdown, direction='BACK', members_flag=Fal
         prov['parameter'][p.id] = p
         # if there is a parameter, a corresponding parameterDescription
         # must also exist
-        prov['parameterDescription'][p.description.id] = p.description
+        #prov['parameterDescription'][p.description.id] = p.description
 
     # add description of the current activity, if existing;
     # independent of back/forth
-    if activity.description is not None:
-        if activity.description.id not in prov['activityDescription']:
-            prov['activityDescription'][activity.description.id] = activity.description
+    #if activity.description is not None:
+    #    if activity.description.id not in prov['activityDescription']:
+    #        prov['activityDescription'][activity.description.id] = activity.description
 
 
     # First check the 'shortcut' relationship 'wasInformedBy',
@@ -332,8 +332,8 @@ def track_activity(activity, prov, countdown, direction='BACK', members_flag=Fal
                 prov['used'][u.id] = u
 
                 # also add corresponding description class, if existing
-                if u.description:
-                    prov['usedDescription'][u.description.id] = u.description
+                #if u.description:
+                #    prov['usedDescription'][u.description.id] = u.description
 
             # add entity to prov, if not yet done
             if u.entity.id not in prov['entity']:
@@ -358,8 +358,8 @@ def track_activity(activity, prov, countdown, direction='BACK', members_flag=Fal
                 prov['wasGeneratedBy'][wg.id] = wg
 
                 # also add corresponding description class, if existing
-                if wg.description:
-                    prov['wasGeneratedByDescription'][wg.description.id] = wg.description
+                #if wg.description:
+                #    prov['wasGeneratedByDescription'][wg.description.id] = wg.description
 
             # add entity to prov-list, if not included already
             if wg.entity.id not in prov['entity']:

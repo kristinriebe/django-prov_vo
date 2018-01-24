@@ -347,7 +347,7 @@ class WasGeneratedByDescriptionPROVNRenderer(PROVNBaseRenderer):
         string = "wasGeneratedByDescription("
 
         # add id + references
-        string += self.get_value(usedDescription, "id") + ", "
+        string += self.get_value(wasGeneratedByDescription, "id") + ", "
         string += self.get_value(wasGeneratedByDescription, "entityDescription") + ", "
         string += self.get_value(wasGeneratedByDescription, "activityDescription") + ") "
 
@@ -521,14 +521,14 @@ class PROVNRenderer(PROVNBaseRenderer):
             string += UsedPROVNRenderer().render(u) + "\n"
 
         if 'usedDescription' in data:
-            for u_id, u in data['used'].iteritems():
+            for u_id, u in data['usedDescription'].iteritems():
                 string += UsedDescriptionPROVNRenderer().render(u) + "\n"
 
         for w_id, w in data['wasGeneratedBy'].iteritems():
             string += WasGeneratedByPROVNRenderer().render(w) + "\n"
 
         if 'wasGeneratedByDescription' in data:
-            for w_id, w in data['wasGeneratedBy'].iteritems():
+            for w_id, w in data['wasGeneratedByDescription'].iteritems():
                 string += WasGeneratedByDescriptionPROVNRenderer().render(w) + "\n"
 
         for w_id, w in data['wasAssociatedWith'].iteritems():

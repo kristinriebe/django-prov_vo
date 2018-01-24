@@ -350,6 +350,7 @@ def provdal_form(request):
 
 # If errors shall be shown in browser directly, use @exceptions_to_http_status;
 # but be aware that this only shows some part of the message, not all the trace.
+# Note: Thisis only used to catch HttpResponseBadRequest errors with e.g. double MODEL url query parameter
 @exceptions_to_http_status
 def provdal(request):
 
@@ -499,6 +500,14 @@ def provdal(request):
                     agent_flag=agent_flag)
         except Agent.DoesNotExist:
             pass
+
+
+    # now add all linked descriptions
+    for key in ['entity', 'activity', 'used', 'wasGeneratedBy', 'parameter']:
+        if key in prov:
+            for id, o in prov[key].iteritems():
+                if o.description:
+                    prov[key + 'Description'][o.description.id] = o.description
 
 
     # The prov dictionary now contains the complete provenance information,

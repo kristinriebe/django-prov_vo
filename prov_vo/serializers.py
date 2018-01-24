@@ -165,11 +165,9 @@ class W3CActivitySerializer(ActivitySerializer):
     # voprov_desc_version = CustomCharField(source='description.version', custom_field_name='voprov:desc_version')
 
     def get_voprov_description(self, obj):
-        description_id = obj.description
-        if description_id:
-            description = ActivityDescription.objects.get(id=description_id)
+        description = obj.description
+        if description:
             data = VOActivityDescriptionSerializer(description).data
-            #print 'data: ', data
         else:
             data = None
         return data
@@ -218,9 +216,8 @@ class W3CEntitySerializer(EntitySerializer):
             #'voprov_desc_doculink')
 
     def get_voprov_description(self, obj):
-        description_id = obj.description
-        if description_id:
-            description = EntityDescription.objects.get(id=description_id)
+        description = obj.description
+        if description:
             data = VOEntityDescriptionSerializer(description).data
         else:
             data = None
@@ -250,7 +247,34 @@ class UsedSerializer(NonNullCustomSerializer):
 
     class Meta:
         model = Used
-        fields = ('id', 'prov_activity', 'prov_entity', 'prov_time', 'prov_role')
+        fields = ('prov_activity', 'prov_entity', 'prov_time', 'prov_role')
+
+
+class W3CUsedSerializer(UsedSerializer):
+    voprov_description = CustomSerializerMethodField(custom_field_name='voprov:description')
+
+    class Meta:
+        model = Used
+        fields = ('prov_activity', 'prov_entity', 'prov_time', 'prov_role', 'voprov_description')
+
+    def get_voprov_description(self, obj):
+        description = obj.description
+        if description:
+            data = W3CUsedDescriptionSerializer(description).data
+        else:
+            data = None
+        return data
+
+
+class W3CUsedDescriptionSerializer(NonNullCustomSerializer):
+    voprov_id = CustomCharField(source='id', custom_field_name='voprov:id')
+    voprov_activityDescription = CustomCharField(source='activityDescription_id', custom_field_name='voprov:activityDescription')
+    voprov_entityDescription = CustomCharField(source='entityDescription_id', custom_field_name='voprov:entityDescription')
+    voprov_role = CustomCharField(source='role', custom_field_name='voprov:role')
+
+    class Meta:
+        model = UsedDescription
+        fields = ('voprov_id', 'voprov_activityDescription', 'voprov_entityDescription', 'voprov_role')
 
 
 class WasGeneratedBySerializer(NonNullCustomSerializer):
@@ -262,14 +286,41 @@ class WasGeneratedBySerializer(NonNullCustomSerializer):
 
     class Meta:
         model = WasGeneratedBy
-        fields = ('id', 'prov_entity', 'prov_activity', 'prov_time', 'prov_role')
+        fields = ('prov_entity', 'prov_activity', 'prov_time', 'prov_role')
+
+
+class W3CWasGeneratedBySerializer(WasGeneratedBySerializer):
+    voprov_description = CustomSerializerMethodField(custom_field_name='voprov:description')
+
+    class Meta:
+        model = WasGeneratedBy
+        fields = ('prov_entity', 'prov_activity', 'prov_time', 'prov_role', 'voprov_description')
+
+    def get_voprov_description(self, obj):
+        description = obj.description
+        if description:
+            data = W3CWasGeneratedByDescriptionSerializer(description).data
+        else:
+            data = None
+        return data
+
+
+class W3CWasGeneratedByDescriptionSerializer(NonNullCustomSerializer):
+    voprov_id = CustomCharField(source='id', custom_field_name='voprov:id')
+    voprov_entityDescription = CustomCharField(source='entityDescription_id', custom_field_name='voprov:entityDescription')
+    voprov_activityDescription = CustomCharField(source='activityDescription_id', custom_field_name='voprov:activityDescription')
+    voprov_role = CustomCharField(source='role', custom_field_name='voprov:role')
+
+    class Meta:
+        model = WasGeneratedByDescription
+        fields = ('voprov_id', 'voprov_entityDescription', 'voprov_activityDescription', 'voprov_role')
 
 
 class WasAssociatedWithSerializer(NonNullCustomSerializer):
 
     class Meta:
         model = WasAssociatedWith
-        fields = '__all__'
+        exclude = ('id',)
 
 
 class WasAttributedToSerializer(NonNullCustomSerializer):
@@ -279,28 +330,28 @@ class WasAttributedToSerializer(NonNullCustomSerializer):
 
     class Meta:
         model = WasAttributedTo
-        fields = ('id', 'entity', 'agent', 'voprov_role')
+        fields = ('entity', 'agent', 'voprov_role')
 
 
 class HadMemberSerializer(NonNullCustomSerializer):
 
     class Meta:
         model = HadMember
-        fields = '__all__'
+        exclude = ('id',)
 
 
 class WasDerivedFromSerializer(NonNullCustomSerializer):
 
     class Meta:
         model = WasDerivedFrom
-        fields = '__all__'
+        exclude = ('id',)
 
 
 class WasInformedBySerializer(NonNullCustomSerializer):
 
     class Meta:
         model = WasInformedBy
-        fields = '__all__'
+        exclude = ('id',)
 
 
 class ParameterSerializer(NonNullCustomSerializer):
@@ -327,7 +378,7 @@ class W3CHadStepSerializer(NonNullCustomSerializer):
 
     class Meta:
         model = HadStep
-        fields = ('id', 'prov_influencee', 'prov_influencer', 'voprov_votype')
+        fields = ('prov_influencee', 'prov_influencer', 'voprov_votype')
 
 
 class W3CActivityFlowSerializer(W3CActivitySerializer):
@@ -456,11 +507,11 @@ class W3CProvenanceSerializer(serializers.Serializer):
     def get_used(self, obj):
         used = {}
         for u_id, u in obj['used'].iteritems():
-            data = UsedSerializer(u).data
+            data = W3CUsedSerializer(u).data
             u_id = self.add_namespace_to_id(u_id)
             used[u_id] = self.restructure_relations(data)
 
-        # add one used-relationshop for each parameter, only temporary (do not save!):
+        # add one used-relationship for each parameter, only temporary (do not save!):
         num_param = 0
         for p_id, p in obj['parameter'].iteritems():
             activity = p.activity
@@ -477,7 +528,7 @@ class W3CProvenanceSerializer(serializers.Serializer):
     def get_wasGeneratedBy(self, obj):
         wasGeneratedBy = {}
         for w_id, w in obj['wasGeneratedBy'].iteritems():
-            data = WasGeneratedBySerializer(w).data
+            data = W3CWasGeneratedBySerializer(w).data
             w_id = self.add_namespace_to_id(w_id)
             wasGeneratedBy[w_id] = self.restructure_relations(data)
 
@@ -544,7 +595,7 @@ class W3CProvenanceSerializer(serializers.Serializer):
 
         # exclude id in serialisation
         # (since it is used as key for this class instance anyway)
-        data.pop('id')
+        #data.pop('id')
 
         for key, value in data.iteritems():
             # restructure serialisation of qualified values
@@ -577,14 +628,16 @@ class W3CProvenanceSerializer(serializers.Serializer):
         # Returns the modified dictionary.
         # TODO: Find a more elegant solution for this!
 
-        # exclude id in serialisation of relations
+        # Can exclude id in serialisation of relations
         # (since it is used as key for this class instance anyway)
-        data.pop('id')
+        # data.pop('id') --> done for each relation in serial. class, except description-relations
 
         for key, value in data.iteritems():
 
             # replace prov_ by prov for the given keys:
-            if key in ['id', 'activity', 'entity', 'collection', 'agent', 'generatedEntity', 'usedEntity', 'usage', 'generation', 'role', 'informed', 'informant', 'influencee', 'influencer']:
+            if key in ['id', 'activity', 'entity', 'collection', 'agent',
+                        'generatedEntity', 'usedEntity', 'usage', 'generation', 'role',
+                        'informed', 'informant', 'influencee', 'influencer', 'description']:
                 newkey = 'prov:' + key
                 data[newkey] = data.pop(key)
 
@@ -726,7 +779,7 @@ class VOUsedSerializer(NonNullCustomSerializer):
 
     class Meta:
         model = Used
-        fields = '__all__'
+        exclude = ('id',)
 
 
 class VOUsedDescriptionSerializer(NonNullCustomSerializer):
@@ -740,7 +793,7 @@ class VOWasGeneratedBySerializer(NonNullCustomSerializer):
 
     class Meta:
         model = WasGeneratedBy
-        fields = '__all__'
+        exclude = ('id',)
 
 
 class VOWasGeneratedByDescriptionSerializer(NonNullCustomSerializer):
@@ -754,42 +807,42 @@ class VOWasAssociatedWithSerializer(NonNullCustomSerializer):
 
     class Meta:
         model = WasAssociatedWith
-        fields = '__all__'
+        exclude = ('id',)
 
 
 class VOWasAttributedToSerializer(NonNullCustomSerializer):
 
     class Meta:
         model = WasAttributedTo
-        fields = '__all__'
+        exclude = ('id',)
 
 
 class VOHadMemberSerializer(NonNullCustomSerializer):
 
     class Meta:
         model = HadMember
-        fields = '__all__'
+        exclude = ('id',)
 
 
 class VOWasDerivedFromSerializer(NonNullCustomSerializer):
 
     class Meta:
         model = WasDerivedFrom
-        fields = '__all__'
+        exclude = ('id',)
 
 
 class VOHadStepSerializer(NonNullCustomSerializer):
 
     class Meta:
         model = HadStep
-        fields = '__all__'
+        exclude = ('id',)
 
 
 class VOWasInformedBySerializer(NonNullCustomSerializer):
 
     class Meta:
         model = WasInformedBy
-        fields = '__all__'
+        exclude = ('id',)
 
 
 class VOProvenanceSerializer(serializers.Serializer):
@@ -1001,12 +1054,14 @@ class VOProvenanceSerializer(serializers.Serializer):
 
         # exclude id in serialisation of relations
         # (since it is used as key for this class instance anyway)
-        data.pop('id')
+        #data.pop('id')
 
         for key, value in data.iteritems():
 
             # replace prov_ by prov for the given keys:
-            if key in ['activity', 'activityFlow', 'entity', 'collection', 'agent', 'generatedEntity', 'usedEntity', 'usage', 'generation', 'role', 'informed', 'informant']:
+            if key in ['id', 'activity', 'activityFlow', 'entity', 'collection', 'agent',
+                        'generatedEntity', 'usedEntity', 'usage', 'generation', 'role',
+                        'informed', 'informant', 'description']:
                 newkey = 'voprov:' + key
                 data[newkey] = data.pop(key)
 
