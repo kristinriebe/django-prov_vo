@@ -84,10 +84,11 @@ class W3CPROVXMLRenderer(BaseRenderer):
         PROV = "{%s}" % nsmap['prov']
         root = etree.Element(PROV+'document', nsmap=nsmap)
 
-        reference_list = ['prov:description', 'prov:activity', 'prov:entity',
+        reference_list = ['prov:activity', 'prov:entity',
                 'prov:agent', 'prov:influencer', 'prov:influencee',
                 'prov:informed', 'prov:informant', 'prov:usedEntity',
-                'prov:generatedEntity', 'prov:collection', 'prov:activityFlow',
+                'prov:generatedEntity', 'prov:collection',
+                'voprov:activityFlow',
                 'voprov:activityDescription', 'voprov:entityDescription']
 
         # Sort attributes: 1. mandatory att., 2. optional att. in alphabetical order
@@ -95,10 +96,9 @@ class W3CPROVXMLRenderer(BaseRenderer):
         for classkey in data:
             for e in data[classkey]:
                 leaf = etree.SubElement(root, PROV+classkey)
-
                 for attribute in data[classkey][e]:
                     if attribute == 'prov:id':
-                        leaf.attrib[PROV+'id'] = data[classkey][e]['prov:id']
+                        leaf.attrib[PROV+'id'] = data[classkey][e][attribute]
                     else:
                         att_ns = attribute.split(':')[0]
                         NS = "{%s}" % nsmap[att_ns]
@@ -110,8 +110,8 @@ class W3CPROVXMLRenderer(BaseRenderer):
                         elif attribute == 'voprov:description':
                             # embed the descriptions here
                             for desc_attribute in data[classkey][e][attribute]:
-                                if desc_attribute == 'voprov:id':
-                                    leaf.attrib[PROV+'id'] = data[classkey][e][attribute]['voprov:id']
+                                if desc_attribute == 'prov:id':  # or if voprov:id
+                                    leaf2.attrib[PROV+'id'] = data[classkey][e][attribute][desc_attribute]
                                 else:
                                     att_ns = desc_attribute.split(':')[0]
                                     NS = "{%s}" % nsmap[att_ns]
@@ -349,7 +349,7 @@ class WasGeneratedByDescriptionPROVNRenderer(PROVNBaseRenderer):
         # add id + references
         string += self.get_value(wasGeneratedByDescription, "id") + ", "
         string += self.get_value(wasGeneratedByDescription, "entityDescription") + ", "
-        string += self.get_value(wasGeneratedByDescription, "activityDescription") + ") "
+        string += self.get_value(wasGeneratedByDescription, "activityDescription") + ")"
 
         # add all other optional attributes in []
         string = self.add_optional_attributes(string, wasGeneratedByDescription)

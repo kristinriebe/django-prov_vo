@@ -865,7 +865,7 @@ activityDescription(ex:actdesc1, [voprov:name="Activity Description 1", voprov:t
         self.assertEqual(response.status_code, 200)
         content = get_content(response)
         expected = \
-"""activity(ex:act1, -, -, [prov:label="Activity 1", voprov:description="{\'voprov:id\': u\'ex:actdesc1\', \'voprov:type\': u\'observation\', \'voprov:name\': u\'Activity Description 1\'}"])
+"""activity(ex:act1, -, -, [prov:label="Activity 1", voprov:description="{\'prov:id\': u\'ex:actdesc1\', \'voprov:type\': u\'observation\', \'prov:label\': u\'Activity Description 1\'}"])
 """
 #"""activity(ex:act1, -, -, [prov:label="Activity 1", voprov:description="ex:actdesc1", voprov:desc_name="Activity Description 1", voprov:desc_type="observation"])
 #"""
@@ -927,7 +927,7 @@ entityDescription(ex:entdesc1, [voprov:name="Entity Description 1", voprov:categ
         self.assertEqual(response.status_code, 200)
         content = get_content(response)
         expected = \
-"""entity(ex:ent1, [prov:label="Entity 1", voprov:description="{\'voprov:id\': u\'ex:entdesc1\', \'voprov:name\': u\'Entity Description 1\', \'voprov:category\': u\'image\'}"])
+"""entity(ex:ent1, [prov:label="Entity 1", voprov:description="{\'prov:id\': u\'ex:entdesc1\', \'voprov:category\': u\'image\', \'prov:label\': u\'Entity Description 1\'}"])
 """
 #"""entity(ex:ent1, [prov:label="Entity 1", voprov:description="ex:entdesc1", voprov:desc_name="Entity Description 1", voprov:desc_category="image"])
 #"""
@@ -939,7 +939,7 @@ entityDescription(ex:entdesc1, [voprov:name="Entity Description 1", voprov:categ
         self.assertEqual(response.status_code, 200)
         content = json.loads(response.content)
         self.assertEqual(content['entity'],
-            {'ex:ent1': {'prov:id': 'ex:ent1', 'prov:label': 'Entity 1', 'voprov:description': {'voprov:id': 'ex:entdesc1', 'voprov:name': 'Entity Description 1', 'voprov:category': 'image'} }})
+            {'ex:ent1': {'prov:id': 'ex:ent1', 'prov:label': 'Entity 1', 'voprov:description': {'prov:id': 'ex:entdesc1', 'voprov:category': 'image', 'prov:label': 'Entity Description 1'} }})
 
     def test_getProvdalEntityDescriptionProvXMLW3C(self):
         client = Client()
@@ -948,10 +948,10 @@ entityDescription(ex:entdesc1, [voprov:name="Entity Description 1", voprov:categ
         content = response.content
         expected=\
 """<prov:document xmlns:custom="http://www.ivoa.net/documents/ProvenanceDM/ns/custom/" xmlns:prov="http://www.w3.org/ns/prov#" xmlns:rave="http://www.rave-survey.org/prov/" xmlns:voprov="http://www.ivoa.net/documents/ProvenanceDM/ns/voprov/" xmlns:xsd="http://www.w3.org/2000/10/XMLSchema#">
-  <prov:entity prov:id="ex:entdesc1">
+  <prov:entity prov:id="ex:ent1">
     <prov:label>Entity 1</prov:label>
-    <voprov:description>
-      <voprov:name>Entity Description 1</voprov:name>
+    <voprov:description prov:id="ex:entdesc1">
+      <prov:label>Entity Description 1</prov:label>
       <voprov:category>image</voprov:category>
     </voprov:description>
   </prov:entity>
@@ -959,7 +959,6 @@ entityDescription(ex:entdesc1, [voprov:name="Entity Description 1", voprov:categ
 """
         self.assertEqual(content, expected)
 
-# TODO: FIX THIS!
 class ProvDAL_UsedDescription_TestCase(TestCase):
 
     def setUp(self):
@@ -1055,9 +1054,9 @@ usedDescription(ex:udesc1, ex:actdesc1, ex:entdesc1, [voprov:role="input image"]
         self.assertEqual(response.status_code, 200)
         content = get_content(response)
         expected = \
-"""activity(ex:act1, -, -, [prov:label="Activity 1", voprov:description="{'voprov:id': u'ex:actdesc1', 'voprov:type': u'processing', 'voprov:name': u'Activity Description 1'}"])
-entity(ex:ent1, [prov:label="Entity 1", voprov:description="{'voprov:id': u'ex:entdesc1', 'voprov:name': u'Entity Description 1', 'voprov:category': u'image'}"])
-used(ex:act1, ex:ent1, -, [voprov:description="{'voprov:id': u'ex:udesc1', 'voprov:role': u'input image', 'voprov:entityDescription': u'ex:entdesc1', 'voprov:activityDescription': u'ex:actdesc1'}"])
+"""activity(ex:act1, -, -, [prov:label="Activity 1", voprov:description="{'prov:id': u'ex:actdesc1', 'voprov:type': u'processing', 'prov:label': u'Activity Description 1'}"])
+entity(ex:ent1, [prov:label="Entity 1", voprov:description="{'prov:id': u'ex:entdesc1', 'voprov:category': u'image', 'prov:label': u'Entity Description 1'}"])
+used(ex:act1, ex:ent1, -, [voprov:description="{'prov:role': u'input image', 'prov:id': u'ex:udesc1', 'voprov:entityDescription': u'ex:entdesc1', 'voprov:activityDescription': u'ex:actdesc1'}"])
 """
         self.assertEqual(content, expected)
 
@@ -1067,12 +1066,12 @@ used(ex:act1, ex:ent1, -, [voprov:description="{'voprov:id': u'ex:udesc1', 'vopr
         self.assertEqual(response.status_code, 200)
         content = json.loads(response.content)
         self.assertEqual(content['entity'],
-            {'ex:ent1': {'prov:id': 'ex:ent1', 'prov:label': 'Entity 1', 'voprov:description': {'voprov:id': 'ex:entdesc1', 'voprov:name': 'Entity Description 1', 'voprov:category': 'image'}}})
+            {'ex:ent1': {'prov:id': 'ex:ent1', 'prov:label': 'Entity 1', 'voprov:description': {'prov:id': 'ex:entdesc1', 'prov:label': 'Entity Description 1', 'voprov:category': 'image'}}})
         self.assertEqual(content['activity'],
-            {'ex:act1': {'prov:id': 'ex:act1', 'prov:label': 'Activity 1', 'voprov:description': {'voprov:id': 'ex:actdesc1', 'voprov:name': 'Activity Description 1', 'voprov:type': 'processing'} }})
+            {'ex:act1': {'prov:id': 'ex:act1', 'prov:label': 'Activity 1', 'voprov:description': {'prov:id': 'ex:actdesc1', 'prov:label': 'Activity Description 1', 'voprov:type': 'processing'} }})
         self.assertEqual(content['used'],
-            {'_:1': {'prov:activity': 'ex:act1', 'prov:entity': 'ex:ent1', 'voprov:description': {'voprov:id': 'ex:udesc1', 'voprov:activityDescription': 'ex:actdesc1',
-            'voprov:entityDescription': 'ex:entdesc1', 'voprov:role': 'input image'} }})
+            {'_:1': {'prov:activity': 'ex:act1', 'prov:entity': 'ex:ent1', 'voprov:description': {'prov:id': 'ex:udesc1', 'voprov:activityDescription': 'ex:actdesc1',
+            'voprov:entityDescription': 'ex:entdesc1', 'prov:role': 'input image'} }})
 
     def test_getProvdalUsedDescriptionProvXMLW3C(self):
         client = Client()
@@ -1081,27 +1080,27 @@ used(ex:act1, ex:ent1, -, [voprov:description="{'voprov:id': u'ex:udesc1', 'vopr
         content = response.content
         expected=\
 """<prov:document xmlns:custom="http://www.ivoa.net/documents/ProvenanceDM/ns/custom/" xmlns:prov="http://www.w3.org/ns/prov#" xmlns:rave="http://www.rave-survey.org/prov/" xmlns:voprov="http://www.ivoa.net/documents/ProvenanceDM/ns/voprov/" xmlns:xsd="http://www.w3.org/2000/10/XMLSchema#">
-  <prov:activity prov:id="ex:actdesc1">
+  <prov:activity prov:id="ex:act1">
     <prov:label>Activity 1</prov:label>
-    <voprov:description>
-      <voprov:name>Activity Description 1</voprov:name>
+    <voprov:description prov:id="ex:actdesc1">
+      <prov:label>Activity Description 1</prov:label>
       <voprov:type>processing</voprov:type>
     </voprov:description>
   </prov:activity>
-  <prov:entity prov:id="ex:entdesc1">
+  <prov:entity prov:id="ex:ent1">
     <prov:label>Entity 1</prov:label>
-    <voprov:description>
-      <voprov:name>Entity Description 1</voprov:name>
+    <voprov:description prov:id="ex:entdesc1">
+      <prov:label>Entity Description 1</prov:label>
       <voprov:category>image</voprov:category>
     </voprov:description>
   </prov:entity>
-  <prov:used prov:id="ex:udesc1">
+  <prov:used>
     <prov:activity prov:ref="ex:act1"/>
     <prov:entity prov:ref="ex:ent1"/>
-    <voprov:description>
+    <voprov:description prov:id="ex:udesc1">
       <voprov:activityDescription>ex:actdesc1</voprov:activityDescription>
       <voprov:entityDescription>ex:entdesc1</voprov:entityDescription>
-      <voprov:role>input image</voprov:role>
+      <prov:role>input image</prov:role>
     </voprov:description>
   </prov:used>
 </prov:document>
@@ -1109,7 +1108,154 @@ used(ex:act1, ex:ent1, -, [voprov:description="{'voprov:id': u'ex:udesc1', 'vopr
         self.assertEqual(content, expected)
 
 
-# TODO: tests for wasGeneratedByDescription
+class ProvDAL_WasGeneratedByDescription_TestCase(TestCase):
+
+    def setUp(self):
+        ed = EntityDescription.objects.create(id="ex:entdesc1", name="Entity Description 1", category="image")
+        ed.save()
+        e = Entity.objects.create(id="ex:ent1", name="Entity 1", description=ed)
+        e.save()
+
+        ad = ActivityDescription.objects.create(id="ex:actdesc1", name="Activity Description 1", type="observation")
+        ad.save()
+        a = Activity.objects.create(id="ex:act1", name="Activity 1", description=ad)
+        a.save()
+
+        wgd = WasGeneratedByDescription.objects.create(id="ex:wgdesc1", activityDescription=ad, entityDescription=ed, role="raw output image")
+        wgd.save()
+        wg = WasGeneratedBy.objects.create(id=1, entity=e, activity=a, description=wgd)
+        wg.save()
+
+    def test_getProvdalWasGeneratedByDescriptionProvN(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent1&DEPTH=1&RESPONSEFORMAT=PROV-N&MODEL=IVOA')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""activity(ex:act1, -, -, [voprov:name="Activity 1", voprov:description="ex:actdesc1"])
+activityDescription(ex:actdesc1, [voprov:name="Activity Description 1", voprov:type="observation"])
+entity(ex:ent1, [voprov:name="Entity 1", voprov:description="ex:entdesc1"])
+entityDescription(ex:entdesc1, [voprov:name="Entity Description 1", voprov:category="image"])
+wasGeneratedBy(ex:ent1, ex:act1, -, [voprov:description="ex:wgdesc1"])
+wasGeneratedByDescription(ex:wgdesc1, ex:entdesc1, ex:actdesc1, [voprov:role="raw output image"])
+"""
+        self.assertEqual(content, expected)
+
+    def test_getProvdalWasGeneratedByDescriptionProvJSON(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent1&DEPTH=1&RESPONSEFORMAT=PROV-JSON&MODEL=IVOA')
+        self.assertEqual(response.status_code, 200)
+        content = json.loads(response.content)
+        self.assertEqual(content['entity'],
+            {'ex:ent1': {'voprov:id': 'ex:ent1', 'voprov:name': 'Entity 1', 'voprov:description': 'ex:entdesc1'}})
+        self.assertEqual(content['entityDescription'],
+            {'ex:entdesc1': {'voprov:id': 'ex:entdesc1', 'voprov:name': 'Entity Description 1', 'voprov:category': 'image'}})
+        self.assertEqual(content['activity'],
+            {'ex:act1': {'voprov:id': 'ex:act1', 'voprov:name': 'Activity 1', 'voprov:description': 'ex:actdesc1'}})
+        self.assertEqual(content['activityDescription'],
+            {'ex:actdesc1': {'voprov:id': 'ex:actdesc1', 'voprov:name': 'Activity Description 1', 'voprov:type': 'observation'}})
+        self.assertEqual(content['wasGeneratedBy'],
+            {'_:1': {'voprov:entity': 'ex:ent1', 'voprov:activity': 'ex:act1', 'voprov:description': 'ex:wgdesc1'}})
+        self.assertEqual(content['wasGeneratedByDescription'],
+            {'ex:wgdesc1': {'voprov:id': 'ex:wgdesc1', 'voprov:entityDescription': 'ex:entdesc1',
+            'voprov:activityDescription': 'ex:actdesc1', 'voprov:role': 'raw output image'}})
+
+    def test_getProvdalWasGeneratedByDescriptionProvXML(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent1&DEPTH=1&RESPONSEFORMAT=PROV-XML&MODEL=IVOA')
+        self.assertEqual(response.status_code, 200)
+        content = response.content
+        expected=\
+"""<voprov:document xmlns:custom="http://www.ivoa.net/documents/ProvenanceDM/ns/custom/" xmlns:prov="http://www.w3.org/ns/prov#" xmlns:rave="http://www.rave-survey.org/prov/" xmlns:voprov="http://www.ivoa.net/documents/ProvenanceDM/ns/voprov/" xmlns:xsd="http://www.w3.org/2000/10/XMLSchema#">
+  <voprov:activity voprov:id="ex:act1">
+    <voprov:name>Activity 1</voprov:name>
+    <voprov:description voprov:ref="ex:actdesc1"/>
+  </voprov:activity>
+  <voprov:entity voprov:id="ex:ent1">
+    <voprov:name>Entity 1</voprov:name>
+    <voprov:description voprov:ref="ex:entdesc1"/>
+  </voprov:entity>
+  <voprov:wasGeneratedBy>
+    <voprov:entity voprov:ref="ex:ent1"/>
+    <voprov:activity voprov:ref="ex:act1"/>
+    <voprov:description voprov:ref="ex:wgdesc1"/>
+  </voprov:wasGeneratedBy>
+  <voprov:activityDescription voprov:id="ex:actdesc1">
+    <voprov:name>Activity Description 1</voprov:name>
+    <voprov:type>observation</voprov:type>
+  </voprov:activityDescription>
+  <voprov:entityDescription voprov:id="ex:entdesc1">
+    <voprov:name>Entity Description 1</voprov:name>
+    <voprov:category>image</voprov:category>
+  </voprov:entityDescription>
+  <voprov:wasGeneratedByDescription voprov:id="ex:wgdesc1">
+    <voprov:role>raw output image</voprov:role>
+    <voprov:entityDescription voprov:ref="ex:entdesc1"/>
+    <voprov:activityDescription voprov:ref="ex:actdesc1"/>
+  </voprov:wasGeneratedByDescription>
+</voprov:document>
+"""
+        self.assertEqual(content, expected)
+
+    def test_getProvdalWasGeneratedByDescriptionProvNW3C(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent1&DEPTH=1&RESPONSEFORMAT=PROV-N&MODEL=W3C')
+        self.assertEqual(response.status_code, 200)
+        content = get_content(response)
+        expected = \
+"""activity(ex:act1, -, -, [prov:label="Activity 1", voprov:description="{'prov:id': u'ex:actdesc1', 'voprov:type': u'observation', 'prov:label': u'Activity Description 1'}"])
+entity(ex:ent1, [prov:label="Entity 1", voprov:description="{'prov:id': u'ex:entdesc1', 'voprov:category': u'image', 'prov:label': u'Entity Description 1'}"])
+wasGeneratedBy(ex:ent1, ex:act1, -, [voprov:description="{'prov:role': u'raw output image', 'prov:id': u'ex:wgdesc1', 'voprov:entityDescription': u'ex:entdesc1', 'voprov:activityDescription': u'ex:actdesc1'}"])
+"""
+        self.assertEqual(content, expected)
+
+    def test_getProvdalWasGeneratedByDescriptionProvJSONW3C(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent1&DEPTH=1&RESPONSEFORMAT=PROV-JSON&MODEL=W3C')
+        self.assertEqual(response.status_code, 200)
+        content = json.loads(response.content)
+        self.assertEqual(content['entity'],
+            {'ex:ent1': {'prov:id': 'ex:ent1', 'prov:label': 'Entity 1', 'voprov:description': {'prov:id': 'ex:entdesc1', 'prov:label': 'Entity Description 1', 'voprov:category': 'image'}}})
+        self.assertEqual(content['activity'],
+            {'ex:act1': {'prov:id': 'ex:act1', 'prov:label': 'Activity 1', 'voprov:description': {'prov:id': 'ex:actdesc1', 'prov:label': 'Activity Description 1', 'voprov:type': 'observation'} }})
+        self.assertEqual(content['wasGeneratedBy'],
+            {'_:1': {'prov:entity': 'ex:ent1', 'prov:activity': 'ex:act1', 'voprov:description': {'prov:id': 'ex:wgdesc1',
+            'voprov:entityDescription': 'ex:entdesc1', 'voprov:activityDescription': 'ex:actdesc1', 'prov:role': 'raw output image'} }})
+
+    def test_getProvdalWasGeneratedByDescriptionProvXMLW3C(self):
+        client = Client()
+        response = client.get(reverse('prov_vo:provdal')+'?ID=ex:ent1&DEPTH=1&RESPONSEFORMAT=PROV-XML&MODEL=W3C')
+        self.assertEqual(response.status_code, 200)
+        content = response.content
+        expected=\
+"""<prov:document xmlns:custom="http://www.ivoa.net/documents/ProvenanceDM/ns/custom/" xmlns:prov="http://www.w3.org/ns/prov#" xmlns:rave="http://www.rave-survey.org/prov/" xmlns:voprov="http://www.ivoa.net/documents/ProvenanceDM/ns/voprov/" xmlns:xsd="http://www.w3.org/2000/10/XMLSchema#">
+  <prov:activity prov:id="ex:act1">
+    <prov:label>Activity 1</prov:label>
+    <voprov:description prov:id="ex:actdesc1">
+      <prov:label>Activity Description 1</prov:label>
+      <voprov:type>observation</voprov:type>
+    </voprov:description>
+  </prov:activity>
+  <prov:entity prov:id="ex:ent1">
+    <prov:label>Entity 1</prov:label>
+    <voprov:description prov:id="ex:entdesc1">
+      <prov:label>Entity Description 1</prov:label>
+      <voprov:category>image</voprov:category>
+    </voprov:description>
+  </prov:entity>
+  <prov:wasGeneratedBy>
+    <prov:entity prov:ref="ex:ent1"/>
+    <prov:activity prov:ref="ex:act1"/>
+    <voprov:description prov:id="ex:wgdesc1">
+      <voprov:entityDescription>ex:entdesc1</voprov:entityDescription>
+      <voprov:activityDescription>ex:actdesc1</voprov:activityDescription>
+      <prov:role>raw output image</prov:role>
+    </voprov:description>
+  </prov:wasGeneratedBy>
+</prov:document>
+"""
+        self.assertEqual(content, expected)
+
 
 
 class ProvDAL_Graph_TestCase(TestCase):
