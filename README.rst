@@ -126,5 +126,4 @@ TODO
 * publish as PyPi package
 
 * Implement votable serialization, for REST api and for Prov-DAL endoint
-* Implement Used/WasGeneratedBy-description classes
 * Find a better way to visualize activityFlow, collection, detail/basic etc.

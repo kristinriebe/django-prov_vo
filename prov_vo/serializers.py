@@ -439,7 +439,7 @@ class W3CParameterSerializer(W3CEntitySerializer):
     prov_label = CustomCharField(source='description.name', custom_field_name='prov:label')
     prov_description = CustomCharField(source='description.annotation', custom_field_name='prov:description')
     voprov_votype = CustomSerializerMethodField(custom_field_name='voprov:votype')
-    voprov_description = CustomCharField(source='description.id', custom_field_name='voprov:description')
+    voprov_description_id = CustomCharField(source='description.id', custom_field_name='voprov:description_id')
     voprov_activity = CustomCharField(source='activity.id', custom_field_name='voprov:activity')
     voprov_datatype = CustomCharField(source='description.datatype', custom_field_name='voprov:datatype')
     voprov_xtype = CustomCharField(source='description.xtype', custom_field_name='voprov:xtype')
@@ -457,7 +457,7 @@ class W3CParameterSerializer(W3CEntitySerializer):
     class Meta:
         model = Parameter
         fields = ('prov_id', 'prov_value', 'prov_label', 'prov_description',
-                  'voprov_votype', 'voprov_description',
+                  'voprov_votype', 'voprov_description_id',
                   'voprov_activity', 'voprov_datatype', 'voprov_xtype',
                   'voprov_unit', 'voprov_ucd', 'voprov_utype', 'voprov_arraysize',
                   'voprov_minval', 'voprov_maxval', 'voprov_options'
